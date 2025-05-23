@@ -88,14 +88,14 @@ const ContenedorDetalle = styled(ContenedorConfirmacion)`
 const Resaltado = styled.span`
   background-color: ${({ nivel }) => {
     switch (nivel) {
-      case "Alto":
-      case "Alta":
+      case "Impacto Alto":
+      case "Probabilidad Alta":
         return "#f44336";
-      case "Medio":
-      case "Media":
+      case "Impacto Medio":
+      case "Probabilidad Media":
         return "#FFA832";
-      case "Bajo":
-      case "Baja":
+      case "Impacto Bajo":
+      case "Probabilidad Baja":
         return "#eeca06";
       default:
         return "transparent";

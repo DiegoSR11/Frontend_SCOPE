@@ -122,7 +122,7 @@ const ChatBotIA = ({ proyecto, tareas = [], riesgos = [], vista }) => {
     setMensajes([...mensajes, nuevoMensaje]);
 
     try {
-      const respuesta = await axios.post("http://localhost:5000/api/chat", {
+      const respuesta = await axios.post("https://backendscope-hkg5a4g8d7dsdwdh.canadacentral-01.azurewebsites.net/api/chat", {
         mensaje: prompt,
       });
 
