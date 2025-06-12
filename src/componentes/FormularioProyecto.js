@@ -22,7 +22,7 @@ import Alerta from "../elementos/Alerta";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useEffect } from 'react';
-
+import BotonInfo from "./../elementos/BotonInfo";
 // Estilos (mismos que enviaste)
 const TarjetaFormulario = styled.div`
   background: #fff;
@@ -36,7 +36,12 @@ const TarjetaFormulario = styled.div`
     margin: 1rem;
   }
 `;
-
+const LabelBotonContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+`;
 const SelectsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -381,24 +386,43 @@ const FormularioProyecto = ( {proyecto} )=> {
   const obtenerMetodologiaIA = async (datos) => {
     try {
       const prompt = `
-        Eres un asistente experto en selección de metodologías de gestión de proyectos de TI. 
-        Debes analizar cuidadosamente las características específicas del proyecto que se presentan a continuación:
+        Eres un **consultor senior en gestión de proyectos de TI** con más de 15 años de experiencia aplicando metodologías de ciclo de vida y frameworks ágiles.
 
-        - Nombre del proyecto: "${datos.nombreProyecto || "No especificado"}"
-        - Descripción del proyecto: "${datos.descripcion || "No especificada"}"
-        - Tamaño del proyecto: "${datos.tamaño || "No especificado"}" (pequeño, mediano, grande)
-        - Complejidad del proyecto: "${datos.complejidad || "No especificada"}" (baja, media, alta)
-        - ¿Hay presencia activa del cliente?: "${datos.presenciaCliente ? "Sí" : "No"}"
+        INSTRUCCIONES ESTRICTAS  
+        1. Analiza únicamente la información contenida en el objeto JSON proyecto.  
+        2. Elige **exactamente una** de las siguientes opciones:  
 
-        Con base en estos datos:
-        - Selecciona **únicamente una metodología real y concreta** de gestión de proyectos (por ejemplo: Scrum, Kanban, Waterfall, XP, PRINCE2, PMBOK, etc.).
-        - La metodología debe **adaptarse de manera precisa** a las condiciones descritas.
-        - **No generalices ni combines metodologías.**
-        - **No expliques** tu elección ni escribas justificaciones.
-        - Responde **exclusivamente** con el **nombre exacto** de la metodología más adecuada.
+          Waterfall
+          Iterativo  
+          Spiral  
+          V-Model  
+          Dynamic Systems Development Method
+          Rational Unified Process
+          Prototipado  
+          Feature-Driven Development
+          Six Sigma
+          Scrum  
+          Kanban  
+          Extreme Programming
+          Crystal  
+          Lean Software Development  
 
-        Ejemplo de respuesta válida:  
-        "Scrum"
+        3. Selecciona la opción que **mejor se ajuste** a las características recibidas.  
+        4. **No combines** opciones ni inventes variantes.  
+        5. **No expliques** tu elección ni añadas texto adicional.  
+        6. Devuelve **solo** el nombre exacto de la metodología o framework elegido, sin comillas.
+
+        json
+        {
+          "proyecto": {
+            "nombre":            "${datos.nombreProyecto || "No especificado"}",
+            "descripcion":       "${datos.descripcion      || "No especificada"}",
+            "tamaño":            "${datos.tamaño           || "No especificado"}",   
+            "complejidad":       "${datos.complejidad      || "No especificada"}", 
+            "presenciaCliente":  ${datos.presenciaCliente}                   
+          }
+        }
+
         `;
   
       const respuesta = await axios.post("https://backendscope-hkg5a4g8d7dsdwdh.canadacentral-01.azurewebsites.net/api/chat", {
@@ -446,9 +470,12 @@ const FormularioProyecto = ( {proyecto} )=> {
               onChange={(e) => setNombreProyecto(e.target.value)}
             />
           </CampoProyecto>
-
           <CampoProyecto>
-            <Label htmlFor="descripcion">Descripción del Proyecto</Label>
+            <LabelBotonContainer>
+              <Label htmlFor="descripcion">Descripción del Proyecto</Label>
+              <BotonInfo mensaje="Describe normas/compliance (ISO u otros), nivel de documentación inicial y de avance, disponibilidad de recursos y roles involucrados." />
+            </LabelBotonContainer>
+
             <InputProyecto
               as="textarea"
               id="descripcion"

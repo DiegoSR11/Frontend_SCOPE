@@ -24,6 +24,11 @@ import styled from "styled-components";
 import borrarTarea from "./../firebase/borrarTarea";
 import { Link } from "react-router-dom";
 
+// Nuevo: imports para el header
+import { Header, Titulo, LogoImg } from "./../elementos/Header";
+import BtnRegresar from "./../elementos/BtnRegresar";
+import logo from './../imagenes/logo-celeste.png';
+
 // === Estilos adicionales ===
 const Responsable = styled.div`
   background-color: #e1f5fe;
@@ -57,6 +62,7 @@ const ContenedorConfirmacion = styled.div`
   width: 90%;
   max-width: 400px;
 `;
+
 const SeccionDetalle = styled.div`
   margin-bottom: 1rem;
 `;
@@ -101,16 +107,16 @@ const ContenedorDetalle = styled(ContenedorConfirmacion)`
 `;
 
 const coloresEstado = {
-  "pendiente": "#FFA500",     // rojo
-  "En desarrollo": "#2196f3",   // azul
-  "Completado": "#4caf50",    // verde
-  "Quebrado": "#f44336"      // gris
+  Pendiente: "#FFA500",
+  "En desarrollo": "#2196f3",
+  Completado: "#4caf50",
+  Quebrado: "#f44336"
 };
 
 const Estado = styled.span`
   font-weight: bold;
   background-color: ${({ color }) => color || "transparent"};
-  color: white;            /* Texto blanco para buen contraste */
+  color: white;
   padding: 0.2rem 0.5rem;
   border-radius: 0.5rem;
   display: inline-block;
@@ -119,135 +125,112 @@ const Estado = styled.span`
 `;
 
 const ListaDeTareas = ({ id }) => {
-  // Hook personalizado para obtener tareas y paginar
+  // Hooks y estados
   const [tareas, setTareas, obtenerMasTareas, hayMasPorCargar] = useObtenerTareas(id);
-
-
-  // Estados para confirmar eliminación y detalles
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [tareaAEliminar, setTareaAEliminar] = useState(null);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
-
-  // Mapa UID -> Nombre completo responsable
   const [mapaUsuarios, setMapaUsuarios] = useState({});
 
-  // Efecto para obtener nombres de responsables a partir de sus UIDs
   useEffect(() => {
     const obtenerResponsables = async () => {
       const uids = new Set();
-      tareas.forEach(tarea => {
-        if (Array.isArray(tarea.responsables)) {
-          tarea.responsables.forEach(r => uids.add(r));
-        }
-      });
+      tareas.forEach(t => Array.isArray(t.responsables) && t.responsables.forEach(r => uids.add(r)));
 
       const usuariosObtenidos = {};
       await Promise.all(
         Array.from(uids).map(async uid => {
           try {
-            const userRef = doc(db, "usuarios", uid);
-            const userSnap = await getDoc(userRef);
+            const userSnap = await getDoc(doc(db, "usuarios", uid));
             if (userSnap.exists()) {
-              const data = userSnap.data();
-              usuariosObtenidos[uid] = `${data.nombre} ${data.apellido}`;
+              const { nombre, apellido } = userSnap.data();
+              usuariosObtenidos[uid] = `${nombre} ${apellido}`;
             }
           } catch (error) {
             console.error("Error al obtener usuario:", error);
           }
         })
       );
-
       setMapaUsuarios(usuariosObtenidos);
     };
 
-    if (tareas.length > 0) {
-      obtenerResponsables();
-    }
+    if (tareas.length) obtenerResponsables();
   }, [tareas]);
 
-  // Formateo de fecha UNIX a string legible
-  const formatearFecha = (fecha) => {
-    return format(fromUnixTime(fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
-  };
+  const formatearFecha = fecha =>
+    format(fromUnixTime(fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
 
-  // Agrupar tareas por fecha de creación (formateada)
-  const tareasAgrupadas = tareas.reduce((acc, tarea) => {
-    const fechaFormateada = formatearFecha(tarea.fechaCreado);
-    if (!acc[fechaFormateada]) acc[fechaFormateada] = [];
-    acc[fechaFormateada].push(tarea);
+  const tareasAgrupadas = tareas.reduce((acc, t) => {
+    const fecha = formatearFecha(t.fechaCreado);
+    acc[fecha] = acc[fecha] || [];
+    acc[fecha].push(t);
     return acc;
   }, {});
 
-  // Ordenar fechas para mostrar más recientes primero
-  const fechasOrdenadas = Object.keys(tareasAgrupadas).sort((a, b) => {
-    // Convertir string a fecha para comparar correctamente
-    return new Date(b) - new Date(a);
-  });
+  const fechasOrdenadas = Object.keys(tareasAgrupadas).sort((a, b) => new Date(b) - new Date(a));
 
-  // Funciones para manejo de eliminación
-  const confirmarEliminacion = (tarea) => {
+  // Confirmación eliminación
+  const confirmarEliminacion = tarea => {
     setTareaAEliminar(tarea);
     setMostrarConfirmacion(true);
   };
-
   const cancelarEliminacion = () => {
     setTareaAEliminar(null);
     setMostrarConfirmacion(false);
   };
-
   const eliminarTarea = async () => {
     try {
-      await borrarTarea(id, tareaAEliminar.id); // id = idProyecto pasado como prop
+      await borrarTarea(id, tareaAEliminar.id);
       setTareas(prev => prev.filter(t => t.id !== tareaAEliminar.id));
-      setMostrarConfirmacion(false);
-      setTareaAEliminar(null);
+      cancelarEliminacion();
     } catch (error) {
       console.error("Error al eliminar tarea:", error);
     }
   };
 
-
   return (
     <>
+      {/* Header con botón y logo */}
+      <Header>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <BtnRegresar />
+          <Link to="/inicio">
+            <LogoImg src={logo} alt="Logo" />
+          </Link>
+        </div>
+        <Titulo>Lista de Tareas</Titulo>
+      </Header>
+
+      {/* Listado */}
       <Lista>
-        {fechasOrdenadas.map((fecha) => (
+        {fechasOrdenadas.map(fecha => (
           <div key={fecha}>
             <Fecha>{fecha}</Fecha>
             <ContenedorTareasPorFecha>
-              {tareasAgrupadas[fecha].map((tarea) => (
+              {tareasAgrupadas[fecha].map(tarea => (
                 <ElementoLista key={tarea.id}>
                   <Descripcion>
                     <strong>{tarea.nombreTarea}</strong>
                   </Descripcion>
-                  <Descripcion>
-                    Fin: {formatearFecha(tarea.fechaVencimiento)}
-                  </Descripcion>
+                  <Descripcion>Fin: {formatearFecha(tarea.fechaVencimiento)}</Descripcion>
                   <Descripcion>
                     Estado: <Estado color={coloresEstado[tarea.estadoTarea]}>{tarea.estadoTarea}</Estado>
                   </Descripcion>
-
-
                   <Descripcion>
                     Responsables:{" "}
                     {Array.isArray(tarea.responsables) && tarea.responsables.length > 0 ? (
-                      tarea.responsables.map((uid, index) => (
-                        <Responsable key={index}>
-                          {mapaUsuarios[uid] || "Cargando..."}
-                        </Responsable>
+                      tarea.responsables.map((uid, i) => (
+                        <Responsable key={i}>{mapaUsuarios[uid] || "Cargando..."}</Responsable>
                       ))
                     ) : (
                       <em>No asignado</em>
                     )}
                   </Descripcion>
-
                   <ContenedorBotones>
                     <BotonAccion title="Eliminar tarea" onClick={() => confirmarEliminacion(tarea)}>
                       <IconoBorrar />
                     </BotonAccion>
-                    <BotonAccion 
-                    as={Link}
-                    to={`/editarTarea/${id}/${tarea.id}`}
-                    title="Editar tarea">
+                    <BotonAccion as={Link} to={`/editarTarea/${id}/${tarea.id}`} title="Editar tarea">
                       <IconoEditar />
                     </BotonAccion>
                     <BotonAccion title="Ver tarea" onClick={() => setTareaSeleccionada(tarea)}>
@@ -260,7 +243,7 @@ const ListaDeTareas = ({ id }) => {
           </div>
         ))}
 
-        {tareas.length === 0 && (
+        {!tareas.length && (
           <ContenedorSubtitulo>
             <Subtitulo>No hay tareas registradas</Subtitulo>
           </ContenedorSubtitulo>
@@ -273,57 +256,58 @@ const ListaDeTareas = ({ id }) => {
         )}
       </Lista>
 
-      {/* Ventana de confirmación de eliminación */}
+      {/* Modal de confirmación */}
       {mostrarConfirmacion && (
         <VentanaConfirmacion>
           <ContenedorConfirmacion>
-            <p>¿Estás seguro de que deseas eliminar la tarea <strong>{tareaAEliminar?.nombreTarea}</strong>?</p>
+            <p>
+              ¿Eliminar tarea <strong>{tareaAEliminar?.nombreTarea}</strong>?
+            </p>
             <BotonConfirmar onClick={eliminarTarea}>Eliminar</BotonConfirmar>
             <BotonCancelar onClick={cancelarEliminacion}>Cancelar</BotonCancelar>
           </ContenedorConfirmacion>
         </VentanaConfirmacion>
       )}
 
+      {/* Modal de detalles */}
       {tareaSeleccionada && (
         <VentanaDetalle onClick={() => setTareaSeleccionada(null)}>
-          <ContenedorDetalle onClick={(e) => e.stopPropagation()}>
-            <h2 style={{ marginBottom: "1rem", color: "#2c3e50" }}>{tareaSeleccionada.nombreTarea}</h2>
-
+          <ContenedorDetalle onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginBottom: "1rem", color: "#2c3e50" }}>
+              {tareaSeleccionada.nombreTarea}
+            </h2>
             <SeccionDetalle>
               <Etiqueta>Descripción:</Etiqueta>
               <Contenido>{tareaSeleccionada.descripcionTarea || "No proporcionada"}</Contenido>
             </SeccionDetalle>
-
             <SeccionDetalle>
               <Etiqueta>Estado:</Etiqueta>
               <Estado color={coloresEstado[tareaSeleccionada.estadoTarea]}>
                 {tareaSeleccionada.estadoTarea}
               </Estado>
             </SeccionDetalle>
-
             <SeccionDetalle>
               <Etiqueta>Fecha de Vencimiento:</Etiqueta>
               <Contenido>{formatearFecha(tareaSeleccionada.fechaVencimiento)}</Contenido>
             </SeccionDetalle>
-
             <SeccionDetalle>
               <Etiqueta>Responsables:</Etiqueta>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem" }}>
-                {Array.isArray(tareaSeleccionada.responsables) && tareaSeleccionada.responsables.length > 0 ? (
-                  tareaSeleccionada.responsables.map((uid, index) => (
-                    <Responsable key={index}>
-                      {mapaUsuarios[uid] || "Cargando..."}
-                    </Responsable>
+                {Array.isArray(tareaSeleccionada.responsables) &&
+                tareaSeleccionada.responsables.length > 0 ? (
+                  tareaSeleccionada.responsables.map((uid, i) => (
+                    <Responsable key={i}>{mapaUsuarios[uid] || "Cargando..."}</Responsable>
                   ))
                 ) : (
-                  <Contenido><em>No asignado</em></Contenido>
+                  <Contenido>
+                    <em>No asignado</em>
+                  </Contenido>
                 )}
               </div>
             </SeccionDetalle>
           </ContenedorDetalle>
         </VentanaDetalle>
       )}
-
     </>
   );
 };

@@ -1,19 +1,24 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { Header, Titulo } from "./../elementos/Header";
-import BtnRegresar from "./../elementos/BtnRegresar";
 import styled from "styled-components";
+
+import { Header, Titulo, LogoImg } from "./../elementos/Header";
+import BtnRegresar from "./../elementos/BtnRegresar";
 import Cargando from "./../elementos/Cargando";
 import { ContenedorBoton } from "./../elementos/ElementosDeFormulario";
 import Boton from "./../elementos/Boton";
+
 import ListaDeTareas from "../componentes/ListaDeTareas";
 import ListaDeRiesgos from "../componentes/ListaDeRiesgos";
 import ChatBotIA from "../componentes/ChatBotProyecto";
 import DetallesProyecto from "../componentes/DetallesProyecto";
+
 import useObtenerProyecto from "./../hooks/useObtenerProyecto";
 import useObtenerTareas from "../hooks/useObtenerTareas";
 import useObtenerRiesgos from "../hooks/useObtenerRiesgos";
+
+import logo from './../imagenes/logo-celeste.png';
 
 const ContenedorCentral = styled.div`
   width: 100%;
@@ -30,7 +35,7 @@ const Tabs = styled.div`
 `;
 
 const Tab = styled.button`
-  flex: 1 1 30%; /* Ocupa espacio equitativamente y se adapta en pantallas pequeñas */
+  flex: 1 1 30%;
   padding: 0.75rem 1rem;
   background: ${({ $activo }) => ($activo ? "#00A9FF" : "#ccc")};
   color: white;
@@ -45,8 +50,15 @@ const Tab = styled.button`
   }
 
   @media (max-width: 600px) {
-    flex: 1 1 100%; /* En móviles, cada botón ocupa una fila */
+    flex: 1 1 100%;
   }
+`;
+
+// Nuevo contenedor para alinear el botón y el logo
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 `;
 
 const VerProyecto = () => {
@@ -65,7 +77,13 @@ const VerProyecto = () => {
       </Helmet>
 
       <Header>
-        <BtnRegresar />
+        <HeaderActions>
+          <BtnRegresar />
+          <Link to="/inicio">
+            <LogoImg src={logo} alt="Logo" />
+          </Link>
+        </HeaderActions>
+
         <Titulo>{proyecto.nombreProyecto}</Titulo>
 
         {pestaña === "detalles" && (
@@ -88,23 +106,29 @@ const VerProyecto = () => {
       </Header>
 
       <ContenedorCentral>
-
-        {/* Tabs */}
         <Tabs>
-          <Tab $activo={pestaña === "detalles" ? "true" : undefined} onClick={() => setPestaña("detalles")}>
+          <Tab
+            $activo={pestaña === "detalles" ? "true" : undefined}
+            onClick={() => setPestaña("detalles")}
+          >
             Detalles
           </Tab>
 
-          <Tab $activo={pestaña === "tareas" ? "true" : undefined} onClick={() => setPestaña("tareas")}>
+          <Tab
+            $activo={pestaña === "tareas" ? "true" : undefined}
+            onClick={() => setPestaña("tareas")}
+          >
             Tareas
           </Tab>
 
-          <Tab $activo={pestaña === "riesgos" ? "true" : undefined} onClick={() => setPestaña("riesgos")}>
+          <Tab
+            $activo={pestaña === "riesgos" ? "true" : undefined}
+            onClick={() => setPestaña("riesgos")}
+          >
             Riesgos
           </Tab>
         </Tabs>
 
-        {/* Contenido según pestaña */}
         {pestaña === "detalles" && (
           <>
             <DetallesProyecto proyecto={proyecto} idProyecto={id} />
@@ -135,7 +159,6 @@ const VerProyecto = () => {
             <ChatBotIA proyecto={proyecto} tareas={tareas} riesgos={riesgos} vista="riesgos" />
           </>
         )}
-
       </ContenedorCentral>
     </>
   );
