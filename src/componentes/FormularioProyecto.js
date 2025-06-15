@@ -15,9 +15,7 @@ import {
 } from './SelectPropiedades';
 import BtnRegresar from "./../elementos/BtnRegresar";
 import determinarMetodologia from './../funciones/determinarMetodologia';
-import logo from './../imagenes/logo-celeste.png';
-import { Link } from 'react-router-dom';
-import { Header, Titulo, ContenedorLogo, LogoImg, ContenedorHeader } from './../elementos/Header';
+import { Header, Titulo, ContenedorHeader } from './../elementos/Header';
 import Alerta from "../elementos/Alerta";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -448,11 +446,8 @@ const FormularioProyecto = ( {proyecto} )=> {
         <ContenedorHeader>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <BtnRegresar />
-            <ContenedorLogo>
-              <Link to="/inicio"><LogoImg src={logo} alt="Logo" /></Link>
-            </ContenedorLogo>
-          </div>
           <Titulo>Nuevo Proyecto</Titulo>
+          </div>
         </ContenedorHeader>
       </Header>
 

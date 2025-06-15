@@ -102,10 +102,10 @@ const ContenedorDetalle = styled(ContenedorConfirmacion)`
 `;
 
 const coloresEstado = {
-  Pendiente: "#FFA500",
+  "Pendiente": "#FFA500",
   "En desarrollo": "#2196f3",
-  Completado: "#4caf50",
-  Quebrado: "#f44336"
+  "Completado": "#4caf50",
+  "Quebrado": "#f44336"
 };
 
 const Estado = styled.span`

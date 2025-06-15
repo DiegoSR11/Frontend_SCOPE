@@ -6,9 +6,9 @@ const agregarTarea = async ({
   uidUsuario,
   nombreTarea,
   descripcionTarea,
-  fechaCreado,
+  fechaCreado = null,
   fechaVencimiento = null,
-  estadoTarea = "pendiente",
+  estadoTarea = "Pendiente",
   responsables = [],
   tareaAntecesora = null,
   tareaPredecesora = null,
@@ -33,8 +33,6 @@ const agregarTarea = async ({
       tareaPredecesora,
       notas
     });
-
-
 
     return nuevaTareaRef;
 

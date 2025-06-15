@@ -114,7 +114,7 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
   const [descripcionTarea, setDescripcionTarea] = useState('');
   const [fechaInicio, setFechaInicio] = useState(new Date());
   const [fechaVencimiento, setFechaVencimiento] = useState(new Date());
-  const [estadoTarea, setEstadoTarea] = useState('pendiente');
+  const [estadoTarea, setEstadoTarea] = useState("Pendiente");
   const [responsables, setResponsables] = useState([]);
   const [antecesora, setAntecesora] = useState('');
   const [predecesora, setPredecesora] = useState('');
@@ -181,6 +181,7 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
       uidUsuario: usuario.uid,
       nombreTarea,
       descripcionTarea,
+      fechaCreado: getUnixTime(fechaInicio),
       fechaVencimiento: getUnixTime(fechaVencimiento),
       estadoTarea,
       responsables,
@@ -201,7 +202,7 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
         setDescripcionTarea('');
         setFechaInicio(new Date());
         setFechaVencimiento(new Date());
-        setEstadoTarea('pendiente');
+        setEstadoTarea('Pendiente');
         setResponsables([]);
         setAntecesora('');
         setPredecesora('');

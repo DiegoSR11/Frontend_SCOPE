@@ -11,7 +11,6 @@ import perfil             from './../imagenes/perfil.png';
 
 import {
   Header,
-  ContenedorLogo,
   LogoImg,
   ContenedorBotones as BaseContenedorBotones
 } from './../elementos/Header';
@@ -20,10 +19,10 @@ import { auth } from '../firebase/firebaseConfig';
 
 // Elevamos el ContenedorBotones e forzamos alineación centrada
 const ContenedorBotones = styled(BaseContenedorBotones)`
-  /* siempre centrar verticalmente dentro del header */
   align-self: center !important;
 `;
 
+// envoltorio con etiqueta debajo del icono
 const IconWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -36,6 +35,7 @@ const IconLabel = styled.span`
   color: #555;
 `;
 
+// resto de estilos omitidos para brevedad...
 const Titulo = styled.h1`
   font-weight: bold;
   text-transform: uppercase;
@@ -43,37 +43,25 @@ const Titulo = styled.h1`
   text-align: center;
   color: #00A9FF;
   margin-bottom: 1rem;
-
-  @media(max-width: 950px) {
-    font-size: 2.5rem;
-  }
-  @media(max-width: 600px){
-    font-size: 2rem;
-  }
+  @media(max-width: 950px) { font-size: 2.5rem; }
+  @media(max-width: 600px){ font-size: 2rem; }
 `;
-
 const Descripcion = styled.p`
   font-size: 1rem;
   color: #777;
   text-align: center;
   max-width: 400px;
   margin-bottom: 1.5rem;
-
-  @media(max-width: 600px){
-    font-size: 0.9rem;
-    padding: 0 1rem;
-  }
+  @media(max-width: 600px){ font-size: 0.9rem; padding: 0 1rem; }
 `;
-
 const Contenedor = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 2rem 1rem;
   background-color: #fff;
-  min-height: calc(100vh - 4rem);
-`;
 
+`;
 const BotonesContainer = styled.div`
   display: flex;
   gap: 15px;
@@ -87,7 +75,6 @@ const BotonesContainer = styled.div`
     gap: 10px;
   }
 `;
-
 const BotonContenido = styled(Link)`
   background: #00A9FF;
   width: 20rem;
@@ -101,14 +88,12 @@ const BotonContenido = styled(Link)`
   font-weight: 500;
   cursor: pointer;
   text-decoration: none;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 0.75rem;
   text-align: center;
-
   @media(max-width: 48rem){
     width: 90%;
     margin-left: 0;
@@ -116,16 +101,13 @@ const BotonContenido = styled(Link)`
     padding: 1rem;
   }
 `;
-
 const TextoBoton = styled.span`
   color: #fff;
 `;
-
 const LogoImgIcon = styled.img`
   width: 5rem;
   max-height: 5.25rem;
   margin-bottom: 0.5rem;
-
   @media(max-width: 48rem){
     width: 4rem;
   }
@@ -141,11 +123,13 @@ const Inicio = () => {
       </Helmet>
 
       <Header>
-        <ContenedorLogo>
+        {/* Logo con etiqueta "Inicio" */}
+        <IconWrapper>
           <Link to="/">
-            <LogoImg src={logo} alt="Logo" />
+            <LogoImg src={logo} alt="Inicio" />
           </Link>
-        </ContenedorLogo>
+          <IconLabel>Inicio</IconLabel>
+        </IconWrapper>
 
         {userId && (
           <>
@@ -165,7 +149,11 @@ const Inicio = () => {
         )}
 
         <ContenedorBotones>
-          <BotonCerrarSesion />
+          {/* Botón de cerrar sesión con etiqueta */}
+          <IconWrapper>
+            <BotonCerrarSesion />
+            <IconLabel>Cerrar sesión</IconLabel>
+          </IconWrapper>
         </ContenedorBotones>
       </Header>
 

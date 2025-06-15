@@ -2,8 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Header, Titulo } from "./../elementos/Header";
 import { Helmet } from "react-helmet";
 import BtnRegresar from "./../elementos/BtnRegresar";
-import logo from './../imagenes/logo-celeste.png';
-import { ContenedorLogo, LogoImg } from './../elementos/Header';
 import useObtenerProyectos from "./../hooks/useObtenerProyectos";
 import {
   Lista,
@@ -182,9 +180,6 @@ const ListaDeProyectos = () => {
 
       <Header>
         <BtnRegresar />
-        <ContenedorLogo>
-          <Link to="/inicio"><LogoImg src={logo} alt="Logo" /></Link>
-        </ContenedorLogo>
         <Titulo>Lista de Proyectos</Titulo>
         <BotonRegistrar to="/formulario">
           + Registrar Proyecto
