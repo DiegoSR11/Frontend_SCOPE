@@ -1,14 +1,22 @@
 import React, { useState } from "react";
 import { Helmet } from "react-helmet";
-import { Formulario, InputEstilizado, TextoCentrado, FondoCentrado, LogoImg, TarjetaContenedor, TituloSeccion, BotonPrimario, ContenedorInputsDosColumnas } from './../elementos/ElementosDeFormulario';
+import {
+  Formulario,
+  InputEstilizado,
+  TextoCentrado,
+  FondoCentrado,
+  LogoImg,
+  TarjetaContenedor,
+  TituloSeccion,
+  BotonPrimario,
+  ContenedorInputsDosColumnas
+} from './../elementos/ElementosDeFormulario';
 import logo from './../imagenes/logo-celeste.png';
 import { auth } from './../firebase/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import Alerta from "./../elementos/Alerta";
 import agregarUsuario from './../firebase/agregarUsuario';
-
-
 
 const RegistroUsuarios = () => {
   const navigate = useNavigate();
@@ -26,40 +34,63 @@ const RegistroUsuarios = () => {
   const [pais, setPais] = useState('');
   const [departamento, setDepartamento] = useState('');
 
+  // Capitaliza cada palabra, elimina espacios iniciales y colapsa múltiples, pero permite un espacio final
+  const capitalizarCadaPalabra = (texto) => {
+    // Quita espacios al inicio, colapsa más de uno y conserva el resto intacto (incluido espacio final)
+    const limpio = texto.replace(/^\s+/, '').replace(/\s{2,}/g, ' ');
+    return limpio
+      .split(' ')
+      .map(word =>
+        word
+          ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          : ''
+      )
+      .join(' ');
+  };
+
+  // Capitaliza solo la primera letra y minúsculas el resto
+  const capitalizar = (texto) => {
+    if (!texto) return '';
+    return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+  };
+
   const handleChange = (e) => {
-    switch (e.target.name) {
+    const { name, value } = e.target;
+    switch (name) {
       case 'email':
-        establecerCorreo(e.target.value);
+        establecerCorreo(value);
         break;
       case 'password':
-        establecerPassword(e.target.value);
+        establecerPassword(value);
         break;
       case 'password2':
-        establecerPassword2(e.target.value);
+        establecerPassword2(value);
         break;
       case 'nombre':
-        setNombre(e.target.value);
+        setNombre(capitalizarCadaPalabra(value));
         break;
       case 'apellido':
-        setApellido(e.target.value);
+        setApellido(capitalizarCadaPalabra(value));
         break;
       case 'celular':
-        setCelular(e.target.value);
+        if (/^\d*$/.test(value)) {
+          setCelular(value.slice(0, 9));
+        }
         break;
       case 'empresa':
-        setEmpresa(e.target.value);
+        setEmpresa(capitalizar(value));
         break;
       case 'area':
-        setArea(e.target.value);
+        setArea(capitalizar(value));
         break;
       case 'rol':
-        setRol(e.target.value);
+        setRol(capitalizar(value));
         break;
       case 'pais':
-        setPais(e.target.value);
+        setPais(capitalizar(value));
         break;
       case 'departamento':
-        setDepartamento(e.target.value);
+        setDepartamento(capitalizar(value));
         break;
       default:
         break;
@@ -71,40 +102,33 @@ const RegistroUsuarios = () => {
     cambiarEstadoAlerta(false);
     cambiarAlerta({});
 
-    // Validaciones
-    const expresionRegular = /[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/;
-    if (!expresionRegular.test(correo)) {
+    const emailRegex = /[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+/;
+    if (!emailRegex.test(correo)) {
       cambiarEstadoAlerta(true);
-      cambiarAlerta({
-        tipo: 'error',
-        mensaje: 'Por favor ingresa un correo electrónico válido'
-      });
+      cambiarAlerta({ tipo: 'error', mensaje: 'Por favor ingresa un correo electrónico válido' });
       return;
     }
 
-    if (correo === '' || password === '' || password2 === '') {
+    if ([correo, password, password2, nombre, apellido, celular].some(v => v.trim() === '')) {
       cambiarEstadoAlerta(true);
-      cambiarAlerta({
-        tipo: 'error',
-        mensaje: 'Por favor rellena todos los datos'
-      });
+      cambiarAlerta({ tipo: 'error', mensaje: 'Por favor rellena todos los datos obligatorios' });
       return;
     }
 
     if (password !== password2) {
       cambiarEstadoAlerta(true);
-      cambiarAlerta({
-        tipo: 'error',
-        mensaje: 'Las contraseñas no son iguales'
-      });
+      cambiarAlerta({ tipo: 'error', mensaje: 'Las contraseñas no son iguales' });
+      return;
+    }
+
+    if (!/^\d{9}$/.test(celular)) {
+      cambiarEstadoAlerta(true);
+      cambiarAlerta({ tipo: 'error', mensaje: 'El número de celular debe tener 9 dígitos y sólo números' });
       return;
     }
 
     try {
-      // Crear usuario en Firebase Authentication
       const infoUsuario = await createUserWithEmailAndPassword(auth, correo, password);
-
-      // Registrar datos personales en Firestore
       await agregarUsuario({
         uid: infoUsuario.user.uid,
         nombre,
@@ -117,19 +141,11 @@ const RegistroUsuarios = () => {
         rol,
         correo
       });
-
       cambiarEstadoAlerta(true);
-      cambiarAlerta({
-        tipo: 'exito',
-        mensaje: 'Usuario registrado con éxito'
-      });
-      setTimeout(() => {
-        navigate('/iniciar-sesion');
-      }, 3000); // 3 segundos para que vea la alerta
-
+      cambiarAlerta({ tipo: 'exito', mensaje: 'Usuario registrado con éxito' });
+      setTimeout(() => navigate('/iniciar-sesion'), 3000);
     } catch (error) {
       cambiarEstadoAlerta(true);
-
       let mensaje;
       switch (error.code) {
         case 'auth/invalid-password':
@@ -143,13 +159,8 @@ const RegistroUsuarios = () => {
           break;
         default:
           mensaje = 'Hubo un error al intentar crear la cuenta.';
-          break;
       }
-
-      cambiarAlerta({
-        tipo: 'error',
-        mensaje: mensaje
-      });
+      cambiarAlerta({ tipo: 'error', mensaje });
     }
   };
 
@@ -164,86 +175,87 @@ const RegistroUsuarios = () => {
           <LogoImg src={logo} alt="Logo" />
           <TituloSeccion>Registrarse</TituloSeccion>
 
-      <ContenedorInputsDosColumnas>
-        <InputEstilizado
-          type="text"
-          name="nombre"
-          placeholder="Nombre"
-          value={nombre}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="text"
-          name="apellido"
-          placeholder="Apellido"
-          value={apellido}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="text"
-          name="celular"
-          placeholder="Celular"
-          value={celular}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="text"
-          name="empresa"
-          placeholder="Empresa"
-          value={empresa}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="text"
-          name="area"
-          placeholder="Área"
-          value={area}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="text"
-          name="rol"
-          placeholder="Puesto o Rol"
-          value={rol}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="text"
-          name="pais"
-          placeholder="País"
-          value={pais}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="text"
-          name="departamento"
-          placeholder="Departamento"
-          value={departamento}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="email"
-          name="email"
-          placeholder="Correo Electrónico"
-          value={correo}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="password"
-          name="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={handleChange}
-        />
-        <InputEstilizado
-          type="password"
-          name="password2"
-          placeholder="Repetir Contraseña"
-          value={password2}
-          onChange={handleChange}
-        />
-      </ContenedorInputsDosColumnas>
-
+          <ContenedorInputsDosColumnas>
+            <InputEstilizado
+              type="text"
+              name="nombre"
+              placeholder="Nombre"
+              value={nombre}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="text"
+              name="apellido"
+              placeholder="Apellido"
+              value={apellido}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="text"
+              name="celular"
+              placeholder="Celular"
+              value={celular}
+              onChange={handleChange}
+              maxLength={9}
+              inputMode="numeric"
+            />
+            <InputEstilizado
+              type="text"
+              name="empresa"
+              placeholder="Empresa"
+              value={empresa}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="text"
+              name="area"
+              placeholder="Área"
+              value={area}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="text"
+              name="rol"
+              placeholder="Puesto o Rol"
+              value={rol}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="text"
+              name="pais"
+              placeholder="País"
+              value={pais}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="text"
+              name="departamento"
+              placeholder="Departamento"
+              value={departamento}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="email"
+              name="email"
+              placeholder="Correo Electrónico"
+              value={correo}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="password"
+              name="password"
+              placeholder="Contraseña"
+              value={password}
+              onChange={handleChange}
+            />
+            <InputEstilizado
+              type="password"
+              name="password2"
+              placeholder="Repetir Contraseña"
+              value={password2}
+              onChange={handleChange}
+            />
+          </ContenedorInputsDosColumnas>
 
           <BotonPrimario as="button" type="submit">
             Crear Cuenta

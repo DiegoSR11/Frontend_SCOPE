@@ -9,6 +9,7 @@ import BtnRegresar from "./../elementos/BtnRegresar";
 import { Link } from "react-router-dom";
 import grupoImg from "./../imagenes/grupo.png";
 import BotonInfo from "./../elementos/BotonInfo";
+
 // Estilos
 const ContenedorCentral = styled.div`
   max-width: 1200px;
@@ -87,16 +88,16 @@ const BotonVerGrupo = styled(Link)`
 const BotonEliminar = styled.button`
   margin: 0 2rem 2rem;
   padding: 0.65rem 1.2rem;
-  background-color: #ef4444;
+  background-color: ${({ disabled }) => (disabled ? "#ccc" : "#ef4444")};
   color: white;
   font-weight: 600;
   border-radius: 0.5rem;
   border: none;
-  cursor: pointer;
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #dc2626;
+    background-color: ${({ disabled }) => (disabled ? "#ccc" : "#dc2626")};
   }
 `;
 
@@ -166,9 +167,9 @@ const ListaDeGrupos = () => {
           where("miembros", "array-contains", usuario.uid)
         );
         const resultado = await getDocs(consulta);
-        const gruposObtenidos = resultado.docs.map((doc) => ({
+        const gruposObtenidos = resultado.docs.map(doc => ({
           id: doc.id,
-          ...doc.data(),
+          ...doc.data()
         }));
         setGrupos(gruposObtenidos);
       } catch (error) {
@@ -181,10 +182,10 @@ const ListaDeGrupos = () => {
     }
   }, [usuario]);
 
-  const borrarProyecto = async (id) => {
+  const borrarProyecto = async id => {
     try {
       await deleteDoc(doc(db, "grupos", id));
-      setGrupos((prev) => prev.filter((grupo) => grupo.id !== id));
+      setGrupos(prev => prev.filter(grupo => grupo.id !== id));
       setMostrarConfirmacion(false);
       setGrupoAEliminar(null);
     } catch (error) {
@@ -209,11 +210,12 @@ const ListaDeGrupos = () => {
 
       <ContenedorCentral>
         {grupos.length > 0 ? (
-          grupos.map((grupo, index) => (
-            <Tarjeta key={grupo.id} color={colores[index % colores.length]}>
-              <ImagenGrupo src={grupoImg} alt="Imagen Grupo" />
-              <Contenido>
-                <div>
+          grupos.map((grupo, index) => {
+            const isCreator = grupo.creadoPor === usuario.uid;
+            return (
+              <Tarjeta key={grupo.id} color={colores[index % colores.length]}>
+                <ImagenGrupo src={grupoImg} alt="Imagen Grupo" />
+                <Contenido>
                   <Etiqueta>Nombre del Grupo</Etiqueta>
                   <Valor>{grupo.nombreGrupo}</Valor>
 
@@ -222,23 +224,25 @@ const ListaDeGrupos = () => {
 
                   <Etiqueta>Miembros</Etiqueta>
                   <Valor>{grupo.miembros?.length || 0}</Valor>
-                </div>
-              </Contenido>
+                </Contenido>
 
-              <BotonVerGrupo to={`/editarGrupo/${grupo.id}`}>
-                Ver Grupo
-              </BotonVerGrupo>
+                <BotonVerGrupo to={`/editarGrupo/${grupo.id}`}>
+                  Ver Grupo
+                </BotonVerGrupo>
 
-              <BotonEliminar
-                onClick={() => {
-                  setGrupoAEliminar(grupo.id);
-                  setMostrarConfirmacion(true);
-                }}
-              >
-                Eliminar grupo
-              </BotonEliminar>
-            </Tarjeta>
-          ))
+                <BotonEliminar
+                  disabled={!isCreator}
+                  onClick={() => {
+                    if (!isCreator) return;
+                    setGrupoAEliminar(grupo.id);
+                    setMostrarConfirmacion(true);
+                  }}
+                >
+                  Eliminar grupo
+                </BotonEliminar>
+              </Tarjeta>
+            );
+          })
         ) : (
           <MensajeVacio>No hay grupos por mostrar.</MensajeVacio>
         )}

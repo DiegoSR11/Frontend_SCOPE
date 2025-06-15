@@ -24,11 +24,6 @@ import styled from "styled-components";
 import borrarTarea from "./../firebase/borrarTarea";
 import { Link } from "react-router-dom";
 
-// Nuevo: imports para el header
-import { Header, Titulo, LogoImg } from "./../elementos/Header";
-import BtnRegresar from "./../elementos/BtnRegresar";
-import logo from './../imagenes/logo-celeste.png';
-
 // === Estilos adicionales ===
 const Responsable = styled.div`
   background-color: #e1f5fe;
@@ -190,16 +185,6 @@ const ListaDeTareas = ({ id }) => {
 
   return (
     <>
-      {/* Header con botón y logo */}
-      <Header>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <BtnRegresar />
-          <Link to="/inicio">
-            <LogoImg src={logo} alt="Logo" />
-          </Link>
-        </div>
-        <Titulo>Lista de Tareas</Titulo>
-      </Header>
 
       {/* Listado */}
       <Lista>

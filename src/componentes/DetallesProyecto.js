@@ -6,6 +6,7 @@ import editarProyecto from "./../firebase/editarProyecto";
 import { db } from "./../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import ListaUsuariosModal from "./ListaUsuariosModal";
+import Alerta from "./../elementos/Alerta";  // <-- Importar Alerta
 
 // Estilos principales
 const ContenedorCentral = styled.div`
@@ -88,6 +89,7 @@ const BotonAgregar = styled.button`
     background-color: #3e3aaf;
   }
 `;
+
 const BotonEliminar = styled.button`
   margin-top: 8px;
   padding: 6px 12px;
@@ -101,6 +103,7 @@ const BotonEliminar = styled.button`
     background-color: #b91c1c;
   }
 `;
+
 const TarjetaGestor = styled.div`
   background: #fff;
   padding: 1rem;
@@ -172,6 +175,10 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
   const [mostrarModalUsuarios, setMostrarModalUsuarios] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Estados para la alerta de validación de UID
+  const [estadoAlertaUid, setEstadoAlertaUid] = useState(false);
+  const [alertaUid, setAlertaUid] = useState({});
+
   // Sincronizar UIDs al cambiar proyecto
   useEffect(() => {
     if (proyecto?.gestores) setGestoresUids(proyecto.gestores);
@@ -213,25 +220,65 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
     }
   };
 
-  const handleAgregarUsuario = () => {
+  // Validación de UID antes de agregar desde input
+  const handleAgregarUsuario = async () => {
     const uid = usuarioNuevo.trim();
     if (!uid || gestoresUids.includes(uid)) return;
-    actualizarGestores([...gestoresUids, uid]);
-    setUsuarioNuevo("");
+
+    setLoading(true);
+    setEstadoAlertaUid(false);
+    setAlertaUid({});
+
+    try {
+      const snap = await getDoc(doc(db, 'usuarios', uid));
+      if (!snap.exists()) {
+        setEstadoAlertaUid(true);
+        setAlertaUid({
+          tipo: 'error',
+          mensaje: `El UID "${uid}" no existe.`
+        });
+      } else {
+        await actualizarGestores([...gestoresUids, uid]);
+        setEstadoAlertaUid(true);
+        setAlertaUid({
+          tipo: 'exito',
+          mensaje: 'Se agregó el usuario correctamente.'
+        });
+        setUsuarioNuevo("");
+      }
+    } catch (error) {
+      console.error('Error validando UID:', error);
+      setEstadoAlertaUid(true);
+      setAlertaUid({
+        tipo: 'error',
+        mensaje: 'Hubo un error al validar el UID.'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Validación y alerta al agregar desde modal
+  const handleAgregarDesdeModal = (seleccionados) => {
+    const uidsNuevos = seleccionados
+      .map((u) => u.uid)
+      .filter((uid) => !gestoresUids.includes(uid));
+
+    if (uidsNuevos.length) {
+      actualizarGestores([...gestoresUids, ...uidsNuevos]);
+      setEstadoAlertaUid(true);
+      setAlertaUid({
+        tipo: 'exito',
+        mensaje: `Se agregaron ${uidsNuevos.length} usuario(s) correctamente.`
+      });
+    }
+
+    setMostrarModalUsuarios(false);
   };
 
   const handleEliminarUsuario = (uid) => {
     if (creador?.uid === uid) return;
     actualizarGestores(gestoresUids.filter((x) => x !== uid));
-  };
-
-  const handleAgregarDesdeModal = (seleccionados) => {
-    const uidsNuevos = seleccionados
-      .map((u) => u.uid)
-      .filter((uid) => !gestoresUids.includes(uid));
-    if (uidsNuevos.length) {
-      actualizarGestores([...gestoresUids, ...uidsNuevos]);
-    }
   };
 
   return (
@@ -293,7 +340,7 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
           );
         })}
 
-        <BotonAbrirListaUsuarios onClick={() => setMostrarModalUsuarios(true)}>
+        <BotonAbrirListaUsuarios onClick={() => setMostrarModalUsuarios(true)} disabled={loading}>
           Lista de Usuarios con Grupos común
         </BotonAbrirListaUsuarios>
 
@@ -307,15 +354,19 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
         <BotonAgregar disabled={loading} onClick={handleAgregarUsuario}>
           {loading ? <Spinner /> : 'Agregar Gestor'}
         </BotonAgregar>
+
+        <Alerta
+          tipo={alertaUid.tipo}
+          mensaje={alertaUid.mensaje}
+          estadoAlerta={estadoAlertaUid}
+          cambiarEstadoAlerta={setEstadoAlertaUid}
+        />
       </SeccionDerecha>
 
       {mostrarModalUsuarios && (
         <ListaUsuariosModal
           existingUids={gestoresUids}
-          closeModal={(seleccionados) => {
-            handleAgregarDesdeModal(seleccionados);
-            setMostrarModalUsuarios(false);
-          }}
+          closeModal={handleAgregarDesdeModal}
         />
       )}
     </ContenedorCentral>

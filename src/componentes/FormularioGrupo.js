@@ -10,328 +10,319 @@ import BtnRegresar from "./../elementos/BtnRegresar";
 import { db } from "../firebase/firebaseConfig";
 import { getDoc, doc } from "firebase/firestore";
 import styled from 'styled-components';
-import editarGrupo from '../firebase/editarGrupo';  // Importar la función editarGrupo
+import editarGrupo from '../firebase/editarGrupo';
 import agregarGrupo from '../firebase/agregarGrupo';
+
 const COLOR_PRINCIPAL = '#00A9FF';
 
 const ContenedorPrincipal = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  background-color: #f0f8ff;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 2rem; background-color: #f0f8ff;
 `;
 
 const FormularioEstilizado = styled(Formulario)`
-  max-width: 700px;
-  width: 100%;
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
+  max-width: 700px; width: 100%; background: white;
+  padding: 2rem; border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 169, 255, 0.2);
 `;
 
 const InputEstilizado = styled(Input)`
-  margin-bottom: 1rem;
-  padding: 14px;
-  border-radius: 8px;
-  border: 2px solid #dcefff;
-  font-size: 1rem;
-  width: 100%;
+  margin-bottom: 1rem; padding: 14px; border-radius: 8px;
+  border: 2px solid #dcefff; font-size: 1rem; width: 100%;
+  text-transform: capitalize;
   transition: border-color 0.3s;
-
-  &:focus {
-    border-color: ${COLOR_PRINCIPAL};
-    outline: none;
-  }
+  &:focus { border-color: ${COLOR_PRINCIPAL}; outline: none; }
 `;
 
 const ContenedorFiltrosEstilizado = styled(ContenedorFiltros)`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1rem;
 `;
 
 const BotonPrimario = styled(Boton)`
-  background-color: ${COLOR_PRINCIPAL};
-  color: white;
-  font-size: 1rem;
-  border-radius: 8px;
+  background-color: ${COLOR_PRINCIPAL}; color: white;
+  font-size: 1rem; border-radius: 8px; padding: 0.5rem 1rem;
   transition: background-color 0.3s;
-  margin: 1rem;
-  height: 1.5rem;
+  &:hover { background-color: #008bd1; }
+`;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
-  &:hover {
-    background-color: #008bd1;
-  }
+const BotonSalir = styled(BotonPrimario)`
+  background-color: #ef4444;
+  &:hover { background-color: #dc2626; }
 `;
 
 const ListaMiembros = styled.ul`
-  margin: 0;
-  padding: 0;
-  list-style-type: none;
-  width: 100%;
-  margin-bottom: 0.5rem;
+  list-style: none; padding: 0; width: 100%; margin-bottom: 1rem;
 `;
 
 const ItemMiembro = styled.li`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: #e6f7ff;
-  padding: 12px;
-  border-radius: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: #e6f7ff; padding: 0.75rem 1rem; border-radius: 6px;
   margin-bottom: 0.5rem;
 `;
 
 const BotonEliminar = styled.button`
-  background-color: #ff4d4f;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+  background: #ff4d4f; color: white; border: none;
+  padding: 0.5rem 0.75rem; border-radius: 6px; cursor: pointer;
+  &:hover { background: #cc0000; }
+`;
 
-  &:hover {
-    background-color: #cc0000;
-  }
+const BotonesInferiores = styled.div`
+  display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem;
 `;
 
 const BotonCancelar = styled.button`
-  background: #fff;
-  border: 1px solid #ccc;
-  color: #333;
-  padding: 0.75rem 0.5rem;
-  margin: 1rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  font-size: 1rem;
-  border-radius: 8px;
-  font-family: 'Work Sans', sans-serif;
-  transition: all 0.3s;
+  background: #fff; border: 1px solid #ccc; color: #333;
+  padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;
+  &:hover { background: #f5f5f5; }
+`;
 
-  &:hover {
-    background-color: #f5f5f5;
-  }
-
+// Modal estilos (copiado de ListaDeGrupos)
+const FondoModal = styled.div`
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5); display: flex;
+  justify-content: center; align-items: center; z-index: 999;
+`;
+const ModalConfirmacion = styled.div`
+  background: white; padding: 2rem; border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-width: 400px;
+  width: 100%; text-align: center;
 `;
 
 const FormularioGrupo = ({ grupo }) => {
-    const [nombreGrupo, setNombre] = useState('');
-    const [descripcion, setDescripcion] = useState('');
-    const [miembroInput, setMiembroInput] = useState('');
-    const [miembros, setMiembros] = useState([]);
-    const [estadoAlerta, cambiarEstadoAlerta] = useState(false);
-    const [alerta, cambiarAlerta] = useState({});
-    const { usuario } = useAuth();
-    const navigate = useNavigate();
+  const [nombreGrupo, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
+  const [miembroInput, setMiembroInput] = useState('');
+  const [miembros, setMiembros] = useState([]);
+  const [estadoAlerta, cambiarEstadoAlerta] = useState(false);
+  const [alerta, cambiarAlerta] = useState({});
+  const [mostrarConfirmSalir, setMostrarConfirmSalir] = useState(false);
 
-    const creadoPor = !grupo || (grupo.creadoPor === usuario.uid);
+  const { usuario } = useAuth();
+  const navigate = useNavigate();
 
+  const creadoPor = !grupo || grupo.creadoPor === usuario.uid;
 
-    useEffect(() => {
-        const cargarMiembrosIniciales = async () => {
-            if (grupo) {
-                setNombre(grupo.nombreGrupo || '');
-                setDescripcion(grupo.descripcion || '');
-
-                const uidsMiembros = grupo.miembros || [];
-                const miembrosCargados = [];
-
-                // Recorremos todos los UIDs del grupo
-                for (const uid of uidsMiembros) {
-                    try {
-                        const docRef = doc(db, 'usuarios', uid);
-                        const docSnap = await getDoc(docRef);
-                        if (docSnap.exists()) {
-                            const data = docSnap.data();
-                            miembrosCargados.push({
-                                uid,
-                                nombre: data.nombre || 'Sin nombre',
-                                correo: data.correo || 'Sin correo'
-                            });
-                        }
-                    } catch (error) {
-                        console.error(`Error al obtener datos del usuario con UID ${uid}:`, error);
-                    }
-                }
-
-                setMiembros(miembrosCargados);
-            } else {
-                // Si es un nuevo grupo, solo cargamos al creador
-                const docRef = doc(db, 'usuarios', usuario.uid);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const creador = {
-                        uid: usuario.uid,
-                        nombre: data.nombre || 'Sin nombre',
-                        correo: data.correo || 'Sin correo'
-                    };
-                    setMiembros([creador]);
-                }
-            }
-        };
-
-        cargarMiembrosIniciales();
-    }, [grupo, usuario.uid]);
-
-    const handleAgregarMiembro = async () => {
-        const uid = miembroInput.trim();
-        // Verificamos si el UID está vacío o si ya está en la lista
-        if (!uid) return;
-        if (miembros.some(m => m.uid === uid)) {
-            cambiarAlerta({ tipo: 'error', mensaje: 'Este usuario ya está agregado.' });
-            cambiarEstadoAlerta(true);
-            setMiembroInput(''); // Limpiar el campo de UID
-            return; // Salir si el miembro ya está en la lista
+  useEffect(() => {
+    const cargarMiembros = async () => {
+      if (grupo) {
+        setNombre(grupo.nombreGrupo);
+        setDescripcion(grupo.descripcion || '');
+        const uids = grupo.miembros || [];
+        const carg = [];
+        for (const uid of uids) {
+          const snap = await getDoc(doc(db, 'usuarios', uid));
+          if (snap.exists()) {
+            const d = snap.data();
+            carg.push({ uid, nombre: d.nombre, correo: d.correo });
+          }
         }
-    
-        try {
-            const docRef = doc(db, 'usuarios', uid);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                const nuevoMiembro = {
-                    uid,
-                    nombre: data.nombre || 'Sin nombre',
-                    correo: data.correo || 'Sin correo'
-                };
-                setMiembros([...miembros, nuevoMiembro]);
-                setMiembroInput(''); // Limpiar el campo de UID
-            } else {
-                cambiarAlerta({ tipo: 'error', mensaje: 'No se encontró un usuario con ese UID.' });
-                cambiarEstadoAlerta(true);
-            }
-        } catch (error) {
-            cambiarAlerta({ tipo: 'error', mensaje: 'Error al buscar el usuario.' });
-            cambiarEstadoAlerta(true);
+        setMiembros(carg);
+      } else {
+        const snap = await getDoc(doc(db, 'usuarios', usuario.uid));
+        if (snap.exists()) {
+          const d = snap.data();
+          setMiembros([{ uid: usuario.uid, nombre: d.nombre, correo: d.correo }]);
         }
+      }
     };
-    
+    cargarMiembros();
+  }, [grupo, usuario.uid]);
 
-    const handleEliminarMiembro = (uid) => {
-        if (uid === usuario.uid) return;
-        setMiembros(miembros.filter(m => m.uid !== uid));
-    };
+  const handleAgregarMiembro = async () => {
+    const uid = miembroInput.trim();
+    if (!uid) return;
+    if (miembros.some(m => m.uid === uid)) {
+      cambiarAlerta({ tipo: 'error', mensaje: 'Usuario ya agregado.' });
+      cambiarEstadoAlerta(true);
+      setMiembroInput('');
+      return;
+    }
+    try {
+      const snap = await getDoc(doc(db, 'usuarios', uid));
+      if (snap.exists()) {
+        const d = snap.data();
+        setMiembros([...miembros, { uid, nombre: d.nombre, correo: d.correo }]);
+        cambiarAlerta({ tipo: 'exito', mensaje: 'Usuario agregado.' });
+      } else {
+        cambiarAlerta({ tipo: 'error', mensaje: 'UID no encontrado.' });
+      }
+    } catch {
+      cambiarAlerta({ tipo: 'error', mensaje: 'Error al buscar usuario.' });
+    }
+    cambiarEstadoAlerta(true);
+    setMiembroInput('');
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleEliminarMiembro = uid => {
+    setMiembros(miembros.filter(m => m.uid !== uid));
+  };
 
-        if (nombreGrupo.trim() === '' || miembros.length === 0) {
-            cambiarAlerta({ tipo: 'error', mensaje: 'Nombre del grupo y al menos un miembro son obligatorios.' });
-            cambiarEstadoAlerta(true);
-            return;
-        }
+  const confirmarSalir = () => setMostrarConfirmSalir(true);
 
-        try {
-            const miembrosUIDs = miembros.map(m => m.uid);
+  const handleSalirGrupo = async () => {
+    setMostrarConfirmSalir(false);
+    const nuevos = miembros.filter(m => m.uid !== usuario.uid).map(m => m.uid);
+    try {
+      await editarGrupo({ id: grupo.id, nombreGrupo, descripcion, miembros: nuevos });
+      cambiarAlerta({ tipo: 'exito', mensaje: 'Has salido del grupo.' });
+      cambiarEstadoAlerta(true);
+      setTimeout(() => navigate('/grupos'), 1000);
+    } catch {
+      cambiarAlerta({ tipo: 'error', mensaje: 'Error al salir.' });
+      cambiarEstadoAlerta(true);
+    }
+  };
 
-            if (grupo) {
-                // Actualizar grupo existente
-                await editarGrupo({
-                    id: grupo.id,
-                    nombreGrupo: nombreGrupo,
-                    descripcion,
-                    miembros: miembrosUIDs
-                });
-                cambiarAlerta({ tipo: 'exito', mensaje: 'Grupo actualizado correctamente' });
-            } else {
-                // Crear grupo nuevo
-                await agregarGrupo({
-                    nombreGrupo: nombreGrupo,
-                    descripcion,
-                    fechaCreado: new Date(),
-                    uidUsuario: usuario.uid,
-                    miembros: miembrosUIDs
-                });
-                cambiarAlerta({ tipo: 'exito', mensaje: 'Grupo creado correctamente' });
-            }
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!nombreGrupo.trim() || miembros.length === 0) {
+      cambiarAlerta({ tipo: 'error', mensaje: 'Nombre y al menos un miembro son obligatorios.' });
+      cambiarEstadoAlerta(true);
+      return;
+    }
+    try {
+      const uids = miembros.map(m => m.uid);
+      if (grupo) {
+        await editarGrupo({ id: grupo.id, nombreGrupo, descripcion, miembros: uids });
+        cambiarAlerta({ tipo: 'exito', mensaje: 'Grupo actualizado.' });
+      } else {
+        await agregarGrupo({ nombreGrupo, descripcion, fechaCreado: new Date(), uidUsuario: usuario.uid, miembros: uids });
+        cambiarAlerta({ tipo: 'exito', mensaje: 'Grupo creado.' });
+      }
+      cambiarEstadoAlerta(true);
+      setTimeout(() => navigate('/grupos'), 1500);
+    } catch {
+      cambiarAlerta({ tipo: 'error', mensaje: 'Error al guardar.' });
+      cambiarEstadoAlerta(true);
+    }
+  };
 
-            cambiarEstadoAlerta(true);
-            setTimeout(() => navigate('/grupos'), 1500);
-        } catch (error) {
-            console.error(error);
-            cambiarAlerta({ tipo: 'error', mensaje: 'Hubo un problema al guardar el grupo.' });
-            cambiarEstadoAlerta(true);
-        }
-    };
+  return (
+    <>
+      <Helmet>
+        <title>{grupo ? 'Editar Grupo' : 'Nuevo Grupo'}</title>
+      </Helmet>
+      <Header>
+        <BtnRegresar />
+        <Titulo>{grupo ? 'Editar Grupo' : 'Nuevo Grupo'}</Titulo>
+      </Header>
 
-    return (
-        <div>
-            <Helmet>
-                <title>{grupo ? 'Editar Grupo' : 'Nuevo Grupo'}</title>
-            </Helmet>
-            <Header>
-                <BtnRegresar />
-                <Titulo>{grupo ? 'Editar Grupo' : 'Nuevo Grupo'}</Titulo>
-            </Header>
+      <ContenedorPrincipal>
+        <FormularioEstilizado onSubmit={handleSubmit}>
+          <InputEstilizado
+            type="text"
+            placeholder="Nombre del grupo"
+            value={nombreGrupo}
+            onChange={e => setNombre(e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1))}
+            disabled={!creadoPor}
+          />
+          <InputEstilizado
+            as="textarea"
+            placeholder="Descripción (opcional)"
+            value={descripcion}
+            onChange={e => setDescripcion(e.target.value.charAt(0).toUpperCase() + e.target.value.slice(1))}
+            disabled={!creadoPor}
+          />
 
-            <ContenedorPrincipal>
-            <FormularioEstilizado onSubmit={handleSubmit}>
+          <ListaMiembros>
+            {miembros.map(m => (
+              <ItemMiembro key={m.uid}>
+                <span>{m.nombre} ({m.correo})</span>
+                {creadoPor ? (
+                  m.uid !== usuario.uid && (
+                    <BotonEliminar onClick={() => handleEliminarMiembro(m.uid)}>
+                      Eliminar
+                    </BotonEliminar>
+                  )
+                ) : null}
+              </ItemMiembro>
+            ))}
+          </ListaMiembros>
+
+          {creadoPor ? (
+            <>
+              <ContenedorFiltrosEstilizado>
                 <InputEstilizado
-                    type="text"
-                    placeholder="Nombre del grupo"
-                    value={nombreGrupo}
-                    onChange={e => setNombre(e.target.value)}
-                    disabled={!creadoPor} // Bloquear input si no es el creador
+                  type="text"
+                  placeholder="UID del miembro"
+                  value={miembroInput}
+                  onChange={e => setMiembroInput(e.target.value)}
                 />
-                <InputEstilizado
-                    as="textarea"
-                    placeholder="Descripción del grupo (opcional)"
-                    value={descripcion}
-                    onChange={e => setDescripcion(e.target.value)}
-                    disabled={!creadoPor} // Bloquear input si no es el creador
-                />
+                <BotonPrimario type="button" onClick={handleAgregarMiembro}>
+                  Agregar
+                </BotonPrimario>
+              </ContenedorFiltrosEstilizado>
 
-                {/* Siempre mostrar la lista de miembros */}
-                <ListaMiembros>
-                    {miembros.map((miembro, index) => (
-                        <ItemMiembro key={miembro.uid || index}>
-                            <span>{miembro.nombre} ({miembro.correo})</span>
-                            {miembro.uid !== usuario.uid && creadoPor && (  // Solo permitir eliminar si es el creador
-                                <BotonEliminar onClick={() => handleEliminarMiembro(miembro.uid)}>
-                                    Eliminar
-                                </BotonEliminar>
-                            )}
-                        </ItemMiembro>
-                    ))}
-                </ListaMiembros>
+              <BotonesInferiores>
+                <BotonCancelar type="button" onClick={() => navigate(-1)}>
+                  Cancelar
+                </BotonCancelar>
+                <BotonPrimario as="button" type="submit">
+                  {grupo ? 'Actualizar Grupo' : 'Crear Grupo'}
+                </BotonPrimario>
+              </BotonesInferiores>
+            </>
+          ) : (
+            <BotonesInferiores>
+              <BotonCancelar type="button" onClick={() => navigate(-1)}>
+                Volver
+              </BotonCancelar>
+              <BotonSalir type="button" onClick={confirmarSalir}>
+                Salir del Grupo
+              </BotonSalir>
+            </BotonesInferiores>
+          )}
+        </FormularioEstilizado>
+      </ContenedorPrincipal>
 
-                {/* Mostrar los controles de edición solo si el usuario es el creador */}
-                {creadoPor && (
-                    <>
-                        <ContenedorFiltrosEstilizado>
-                            <InputEstilizado
-                                type="text"
-                                placeholder="UID del miembro"
-                                value={miembroInput}
-                                onChange={e => setMiembroInput(e.target.value)}
-                            />
-                            <BotonPrimario type="button" onClick={handleAgregarMiembro}>
-                                Agregar
-                            </BotonPrimario>
-                        </ContenedorFiltrosEstilizado>
+      {mostrarConfirmSalir && (
+        <FondoModal>
+          <ModalConfirmacion>
+            <p>¿Estás seguro de que deseas salir de este grupo?</p>
+            <div style={{
+              display: "flex",
+              gap: "1rem",
+              marginTop: "1rem",
+              justifyContent: "center"
+            }}>
+              <button
+                onClick={handleSalirGrupo}
+                style={{
+                  backgroundColor: "#dc2626",
+                  color: "#fff",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.5rem",
+                  border: "none",
+                  cursor: "pointer"
+                }}
+              >
+                Sí, salir
+              </button>
+              <button
+                onClick={() => setMostrarConfirmSalir(false)}
+                style={{
+                  padding: "0.5rem 1rem",
+                  borderRadius: "0.5rem",
+                  border: "none",
+                  cursor: "pointer"
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </ModalConfirmacion>
+        </FondoModal>
+      )}
 
-                        <BotonPrimario as="button" type="submit">
-                            {grupo ? 'Actualizar Grupo' : 'Crear Grupo'}
-                        </BotonPrimario>
-                        <BotonCancelar type="button" onClick={() => navigate(-1)}>
-                            Cancelar
-                        </BotonCancelar>
-                    </>
-                )}
-            </FormularioEstilizado>
-            </ContenedorPrincipal>
-            <Alerta tipo={alerta.tipo} mensaje={alerta.mensaje} estadoAlerta={estadoAlerta} cambiarEstadoAlerta={cambiarEstadoAlerta} />
-        </div>
-    );
+      <Alerta
+        tipo={alerta.tipo}
+        mensaje={alerta.mensaje}
+        estadoAlerta={estadoAlerta}
+        cambiarEstadoAlerta={cambiarEstadoAlerta}
+      />
+    </>
+  );
 };
 
 export default FormularioGrupo;

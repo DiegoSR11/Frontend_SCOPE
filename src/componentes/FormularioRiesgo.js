@@ -12,7 +12,7 @@ import DatePicker from './DatePicker';
 import { ReactComponent as IconoPlus } from './../imagenes/plus.svg';
 import useObtenerProyecto from '../hooks/useObtenerProyecto';
 import agregarRiesgo from './../firebase/agregarRiesgo'; 
-import editarRiesgo from './../firebase/editarRiesgo'; // Importa editarRiesgo
+import editarRiesgo from './../firebase/editarRiesgo';
 import {
   SelectNivelImpacto,
   SelectProbabilidad
@@ -24,18 +24,12 @@ const TarjetaFormulario = styled.div`
   border-radius: 0.75rem;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
   margin: 2rem auto;
-
-  @media (max-width: 100px) {
-    padding: 1.5rem;
-    margin: 1rem;
-  }
 `;
 
 const GridFormulario = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 1rem;
-
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -80,14 +74,7 @@ const BotonCancelar = styled.button`
   font-family: 'Work Sans', sans-serif;
   transition: all 0.3s;
   height: 2.5rem;
-
-  &:hover {
-    background-color: #f5f5f5;
-  }
-
-  @media (max-width: 500px) {
-    width: 100%;
-  }
+  &:hover { background-color: #f5f5f5; }
 `;
 
 const BotonCrear = styled.button`
@@ -100,33 +87,15 @@ const BotonCrear = styled.button`
   font-weight: 600;
   font-family: 'Work Sans', sans-serif;
   cursor: pointer;
-  transition: background 0.3s ease;
   display: flex;
   align-items: center;
-  justify-content: center;
   height: 2.5rem;
-
-  &:hover {
-    background: #E04E2F;
-  }
-
-  &:active {
-    background: #C63E24;
-  }
-
-  &:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-
-  svg {
-    height: ${(props) => props.$iconoGrande ? '1.5rem' : '0.75rem'};
-    width: auto;
-    fill: white;
-  }
+  transition: background 0.3s ease;
+  &:hover { background: #E04E2F; }
+  &:active { background: #C63E24; }
+  svg { height: ${props => props.$iconoGrande ? '1.5rem' : '0.75rem'}; fill: white; }
 `;
 
-// Ahora el componente recibe props riesgo (opcional) e idProyecto
 const FormularioRiesgo = ({ riesgo, idProyecto }) => {
   const { id } = useParams();
   const { usuario } = useAuth();
@@ -134,63 +103,55 @@ const FormularioRiesgo = ({ riesgo, idProyecto }) => {
   const navigate = useNavigate();
   const idRiesgo = riesgo?.id;
 
-  // Estados de los campos, si riesgo existe inicializamos con esos valores (para edición)
   const [nombreRiesgo, setNombreRiesgo] = useState(riesgo?.nombreRiesgo || '');
   const [descripcionRiesgo, setDescripcionRiesgo] = useState(riesgo?.descripcionRiesgo || '');
   const [fechaCreado, setfechaCreado] = useState(
-    riesgo?.fechaIdentificacion
-      ? new Date(riesgo.fechaCreado * 1000)
-      : new Date()
+    riesgo?.fechaCreado ? new Date(riesgo.fechaCreado * 1000) : new Date()
   );
   const [nivelImpacto, setNivelImpacto] = useState(riesgo?.impacto || '');
   const [probabilidad, setProbabilidad] = useState(riesgo?.probabilidad || '');
   const [estrategia, setEstrategia] = useState(riesgo?.estrategia || '');
-  const [estadoAlerta, setEstadoAlerta] = useState(false);
+
+  const [estadoAlerta, cambiarEstadoAlerta] = useState(false);
   const [alerta, setAlerta] = useState({});
 
-  // Actualizar estados si cambia la prop riesgo (por si se carga después)
   useEffect(() => {
     if (riesgo) {
       setNombreRiesgo(riesgo.nombreRiesgo || '');
       setDescripcionRiesgo(riesgo.descripcionRiesgo || '');
-      setfechaCreado(
-        riesgo.fechaCreado ? new Date(riesgo.fechaCreado * 1000) : new Date()
-      );
+      setfechaCreado(riesgo.fechaCreado ? new Date(riesgo.fechaCreado * 1000) : new Date());
       setNivelImpacto(riesgo.impacto || '');
       setProbabilidad(riesgo.probabilidad || '');
       setEstrategia(riesgo.estrategia || '');
     }
   }, [riesgo]);
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
+    cambiarEstadoAlerta(false);
 
-    // Validación: todos los campos obligatorios
-    if (
-      !nombreRiesgo.trim() ||
-      !descripcionRiesgo.trim() ||
-      !nivelImpacto.trim() ||
-      !probabilidad.trim() ||
-      !estrategia.trim()
-    ) {
-      setEstadoAlerta(true);
-      setAlerta({ tipo: 'error', mensaje: 'Todos los campos son obligatorios' });
+    const campos = [
+      { valor: nombreRiesgo.trim(), nombre: 'Nombre del Riesgo' },
+      { valor: descripcionRiesgo.trim(), nombre: 'Descripción' },
+      { valor: nivelImpacto.trim(), nombre: 'Nivel de Impacto' },
+      { valor: probabilidad.trim(), nombre: 'Probabilidad' },
+      { valor: estrategia.trim(), nombre: 'Estrategia de Mitigación' },
+    ];
+
+    const vacios = campos.filter(c => !c.valor);
+
+    if (vacios.length > 1) {
+      setAlerta({ tipo: 'error', mensaje: 'Rellena todos los campos' });
+      cambiarEstadoAlerta(true);
+      return;
+    }
+    if (vacios.length === 1) {
+      setAlerta({ tipo: 'error', mensaje: `El campo "${vacios[0].nombre}" es obligatorio` });
+      cambiarEstadoAlerta(true);
       return;
     }
 
-    const dataRiesgo = {
-      idProyecto: idProyecto || id,
-      uidUsuario: usuario.uid,
-      nombreRiesgo,
-      descripcionRiesgo,
-      impacto: nivelImpacto,
-      probabilidad,
-      estrategia,
-      fechaCreado: getUnixTime(fechaCreado),
-    };
-
-    const dataRiesgoEditar = {
-      idRiesgo,
+    const data = {
       idProyecto: idProyecto || id,
       uidUsuario: usuario.uid,
       nombreRiesgo,
@@ -203,18 +164,11 @@ const handleSubmit = async (e) => {
 
     try {
       if (riesgo && riesgo.id) {
-        // Edición
-        await editarRiesgo(dataRiesgoEditar);
+        await editarRiesgo({ idRiesgo, ...data });
         setAlerta({ tipo: 'exito', mensaje: 'El riesgo fue editado correctamente' });
       } else {
-        // Creación
-        await agregarRiesgo({
-          ...dataRiesgo,
-          fechaCreado: getUnixTime(new Date()),
-        });
+        await agregarRiesgo({ ...data, fechaCreado: getUnixTime(new Date()) });
         setAlerta({ tipo: 'exito', mensaje: 'El riesgo fue agregado correctamente' });
-
-        // Limpiar campos solo en creación
         setNombreRiesgo('');
         setDescripcionRiesgo('');
         setNivelImpacto('');
@@ -222,13 +176,12 @@ const handleSubmit = async (e) => {
         setEstrategia('');
         setfechaCreado(new Date());
       }
-      setEstadoAlerta(true);
-      // Después de 800ms regresar a detalle proyecto
+      cambiarEstadoAlerta(true);
       setTimeout(() => navigate(`/proyecto/${idProyecto || id}`), 800);
     } catch (error) {
-      console.error("Error al guardar riesgo:", error);
-      setEstadoAlerta(true);
+      console.error(error);
       setAlerta({ tipo: 'error', mensaje: 'Hubo un problema al guardar el riesgo' });
+      cambiarEstadoAlerta(true);
     }
   };
 
@@ -242,7 +195,10 @@ const handleSubmit = async (e) => {
         <ContenedorHeader>
           <BtnRegresar />
           <Titulo>
-            {riesgo ? `Editar Riesgo para el proyecto ${proyecto?.nombreProyecto || "..."}` : `Crear Riesgo para el proyecto ${proyecto?.nombreProyecto || "..."}`}
+            {riesgo
+              ? `Editar Riesgo para el proyecto ${proyecto?.nombreProyecto || '...'}`
+              : `Crear Riesgo para el proyecto ${proyecto?.nombreProyecto || '...'}`
+            }
           </Titulo>
         </ContenedorHeader>
       </Header>
@@ -255,7 +211,7 @@ const handleSubmit = async (e) => {
               type="text"
               placeholder="Ej: Riesgo de retraso por proveedor"
               value={nombreRiesgo}
-              onChange={(e) => setNombreRiesgo(e.target.value)}
+              onChange={e => setNombreRiesgo(e.target.value)}
             />
           </CampoFormulario>
 
@@ -265,7 +221,7 @@ const handleSubmit = async (e) => {
               type="text"
               placeholder="Describe el riesgo potencial"
               value={descripcionRiesgo}
-              onChange={(e) => setDescripcionRiesgo(e.target.value)}
+              onChange={e => setDescripcionRiesgo(e.target.value)}
             />
           </CampoFormulario>
 
@@ -291,7 +247,7 @@ const handleSubmit = async (e) => {
                 type="text"
                 placeholder="Ej: Contratar proveedor alterno"
                 value={estrategia}
-                onChange={(e) => setEstrategia(e.target.value)}
+                onChange={e => setEstrategia(e.target.value)}
               />
             </CampoFormulario>
           </GridFormulario>
@@ -306,7 +262,12 @@ const handleSubmit = async (e) => {
             </BotonCrear>
           </ContenedorBotones>
 
-          {estadoAlerta && <Alerta tipo={alerta.tipo}>{alerta.mensaje}</Alerta>}
+          <Alerta
+            tipo={alerta.tipo}
+            mensaje={alerta.mensaje}
+            estadoAlerta={estadoAlerta}
+            cambiarEstadoAlerta={cambiarEstadoAlerta}
+          />
         </TarjetaFormulario>
       </Formulario>
     </>
