@@ -166,7 +166,8 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    // validaciones
+
+    // validaciones básicas
     if (!nombreTarea.trim() || !descripcionTarea.trim()) {
       setAlerta({ tipo: 'error', mensaje: 'Nombre y descripción obligatorios.' });
       return setEstadoAlerta(true);
@@ -174,6 +175,26 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
     if (responsables.length === 0) {
       setAlerta({ tipo: 'error', mensaje: 'Selecciona al menos un responsable.' });
       return setEstadoAlerta(true);
+    }
+
+    // Validación de antecesora y predecesora
+    const currentId = esEdicion ? idTarea : null;
+
+    // 1. No pueden ser la misma entre sí (pero pueden estar ambos vacíos)
+    if (antecesora && predecesora && antecesora === predecesora) {
+      setAlerta({ tipo: 'error', mensaje: 'La tarea antecesora y la predecesora no pueden ser la misma.' });
+      return setEstadoAlerta(true);
+    }
+    // 2. No pueden referirse a sí misma (solo aplica en edición porque en creación no hay id aún)
+    if (currentId) {
+      if (antecesora && antecesora === currentId) {
+        setAlerta({ tipo: 'error', mensaje: 'La tarea no puede ser antecesora de sí misma.' });
+        return setEstadoAlerta(true);
+      }
+      if (predecesora && predecesora === currentId) {
+        setAlerta({ tipo: 'error', mensaje: 'La tarea no puede ser predecesora de sí misma.' });
+        return setEstadoAlerta(true);
+      }
     }
 
     const payload = {
@@ -208,7 +229,6 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
         setPredecesora('');
       }
       setEstadoAlerta(true);
-      // después de 800ms, volver al detalle de proyecto
       setTimeout(() => navigate(`/proyecto/${idProyecto}`), 800);
     } catch (err) {
       console.error(err);
@@ -268,15 +288,15 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
               <SelectEstado estado={estadoTarea} cambiarEstado={setEstadoTarea} />
             </CampoFormulario>
 
-          <CampoFormulario>
-            <Label>Responsables</Label>
-            <MultiSelectDropdown
-              options={gestores}
-              selected={responsables}
-              setSelected={setResponsables}
-              label="responsables"
-            />
-          </CampoFormulario>
+            <CampoFormulario>
+              <Label>Responsables</Label>
+              <MultiSelectDropdown
+                options={gestores}
+                selected={responsables}
+                setSelected={setResponsables}
+                label="responsables"
+              />
+            </CampoFormulario>
 
             <CampoFormulario>
               <Label>Tarea antecesora</Label>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import styled from 'styled-components';
 import { getUnixTime } from 'date-fns';
@@ -19,9 +19,9 @@ import { Header, Titulo, ContenedorHeader } from './../elementos/Header';
 import Alerta from "../elementos/Alerta";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useEffect } from 'react';
 import BotonInfo from "./../elementos/BotonInfo";
-// Estilos (mismos que enviaste)
+
+// --- ESTILOS ---
 const TarjetaFormulario = styled.div`
   background: #fff;
   padding: 2rem;
@@ -49,7 +49,6 @@ const SelectsGrid = styled.div`
     grid-template-columns: 1fr;
   }
 `;
-
 const InputProyecto = styled.input`
   width: 100%;
   padding: 0.75rem;
@@ -58,21 +57,20 @@ const InputProyecto = styled.input`
   margin-bottom: 1rem;
   font-size: 1.1rem;
   font-family: 'Work Sans', sans-serif;
+  background: ${({ disabled }) => (disabled ? "#f2f2f2" : "#fff")};
+  color: ${({ disabled }) => (disabled ? "#888" : "#222")};
 `;
-
 const CampoProyecto = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
 `;
-
 const Label = styled.label`
   font-size: 1rem;
   margin-bottom: 0.5rem;
   color: #333;
   font-weight: 500;
 `;
-
 const ContenedorBotonesAccion = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -83,7 +81,6 @@ const ContenedorBotonesAccion = styled.div`
     align-items: stretch;
   }
 `;
-
 const BotonCancelar = styled.button`
   background: #fff;
   border: 1px solid #ccc;
@@ -102,7 +99,6 @@ const BotonCancelar = styled.button`
     width: 100%;
   }
 `;
-
 const BotonCrear = styled.button`
   background: #00A9FF;
   color: #fff;
@@ -118,6 +114,7 @@ const BotonCrear = styled.button`
   align-items: center;
   justify-content: center;
   height: 2.5rem;
+  min-width: 185px;
   &:hover {
     background: #008FCC;
   }
@@ -135,6 +132,22 @@ const BotonCrear = styled.button`
   }
 `;
 
+const ContenedorIA = styled.div`
+  background-color: #F0F8FF;
+  border: 2px solid ${(props) => props.usarIA ? "#00A9FF" : "#ccc"};
+  padding: 1rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: border 0.3s ease;
+  box-sizing: border-box;
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+`;
 const ToggleSwitch = styled.label`
   position: relative;
   display: inline-block;
@@ -174,70 +187,26 @@ const ToggleSwitch = styled.label`
     transform: translateX(24px);
   }
 `;
-
+const SwitchIA = styled(ToggleSwitch)`
+  transform: scale(1);
+  input { transform: scale(1);}
+  span { height: 28px; width: 54px; transition: background-color 0.4s; }
+  span:before { height: 22px; width: 22px; transition: transform 0.4s; }
+  input:checked + span { background-color: #00A9FF; }
+  input:checked + span:before { transform: translateX(24px); }
+  @media (max-width: 768px) {
+    span { width: 48px; height: 26px; }
+    span:before { width: 20px; height: 20px; }
+  }
+`;
 const TextoIA = styled.div`
   font-size: 0.95rem;
   color: #333;
-  strong {
-    color: #007BB5;
-  }
+  strong { color: #007BB5; }
 `;
 
-const ContenedorIA = styled.div`
-  background-color: #F0F8FF;
-  border: 2px solid ${(props) => props.usarIA ? "#00A9FF" : "#ccc"};
-  padding: 1rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  transition: border 0.3s ease;
-  box-sizing: border-box;  // Aseguramos que el padding no afecte el tamaño total
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-`;
-
-const SwitchIA = styled(ToggleSwitch)`
-  transform: scale(1);  // Aumentamos el tamaño del switch para mejor visibilidad
-  input {
-    transform: scale(1);  // Aseguramos que el input también tenga un tamaño adecuado
-  }
-  span {
-    height: 28px;  // Ajustamos la altura para que se vea mejor
-    width: 54px;   // Ajustamos el ancho para mantener la proporción
-    transition: background-color 0.4s;
-  }
-  span:before {
-    height: 22px;  // Aseguramos que el círculo se vea bien
-    width: 22px;
-    transition: transform 0.4s;
-  }
-  input:checked + span {
-    background-color: #00A9FF;
-  }
-  input:checked + span:before {
-    transform: translateX(24px);
-  }
-
-  /* Ajustes para pantallas pequeñas */
-  @media (max-width: 768px) {
-    span {
-      width: 48px;
-      height: 26px;
-    }
-    span:before {
-      width: 20px;
-      height: 20px;
-    }
-  }
-`;
-
-// AQUI inicia el componente
-const FormularioProyecto = ( {proyecto} )=> {
+// === COMPONENTE ===
+const FormularioProyecto = ({ proyecto }) => {
   const [nombreProyecto, setNombreProyecto] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [tamanioProyecto, setTamanioProyecto] = useState('');
@@ -245,7 +214,7 @@ const FormularioProyecto = ( {proyecto} )=> {
   const [presenciaCliente, setPresenciaCliente] = useState('');
   const [iterativoProyecto, setIterativoProyecto] = useState('');
   const [tipoProyecto, setTipoProyecto] = useState('');
-  const [usarIA, setUsarIA] = useState(false); // Este campo podrías manejar diferente si decides guardar este valor
+  const [usarIA, setUsarIA] = useState(false);
 
   const [estadoAlerta, cambiarEstadoAlerta] = useState(false);
   const [alerta, cambiarAlerta] = useState({});
@@ -254,7 +223,6 @@ const FormularioProyecto = ( {proyecto} )=> {
 
   useEffect(() => {
     if (proyecto) {
-      console.log('Proyecto recibido completo:', proyecto);
       setNombreProyecto(proyecto.nombreProyecto || '');
       setDescripcion(proyecto.descripcion || '');
       setTamanioProyecto(proyecto.tamanioProyecto || '');
@@ -262,7 +230,6 @@ const FormularioProyecto = ( {proyecto} )=> {
       setPresenciaCliente(proyecto.presenciaCliente || '');
       setIterativoProyecto(proyecto.iterativoProyecto || '');
       setTipoProyecto(proyecto.tipoProyecto || '');
-
     }
   }, [proyecto]);
 
@@ -291,13 +258,13 @@ const FormularioProyecto = ( {proyecto} )=> {
       let metodologiaProyecto = '';
 
       if (usarIA) {
-        metodologiaProyecto = await obtenerMetodologiaIA({ 
+        metodologiaProyecto = await obtenerMetodologiaIA({
           nombreProyecto,
           descripcion,
           tamaño: tamanioProyecto,
           complejidad: complejoRiesgos,
           presenciaCliente
-        });        
+        });
       } else {
         metodologiaProyecto = determinarMetodologia({
           tamanio: tamanioProyecto,
@@ -307,6 +274,7 @@ const FormularioProyecto = ( {proyecto} )=> {
           tipo: tipoProyecto
         });
       }
+
       const datosProyectoNuevo = {
         nombreProyecto,
         descripcion,
@@ -317,10 +285,12 @@ const FormularioProyecto = ( {proyecto} )=> {
         tipoProyecto,
         metodologiaProyecto,
         uidUsuario: usuario.uid,
+        nombreCreador: usuario?.nombre || "",
         gestores: proyecto?.gestores || [],
       };
+
       const datosProyecto = {
-        id: proyecto?.id,  // PASAMOS el id aquí para editar
+        id: proyecto?.id,
         nombreProyecto,
         descripcion,
         complejoRiesgos,
@@ -333,30 +303,18 @@ const FormularioProyecto = ( {proyecto} )=> {
       };
 
       if (proyecto && proyecto.id) {
-        console.log('Editando proyecto con ID:', proyecto.id);
-        console.log('Nombre proyecto:', nombreProyecto);
         await editarProyecto(datosProyecto);
-
         cambiarEstadoAlerta(true);
-        cambiarAlerta({
-          tipo: 'exito',
-          mensaje: 'Proyecto actualizado con éxito ✨'
-        });
+        cambiarAlerta({ tipo: 'exito', mensaje: 'Proyecto actualizado con éxito ✨' });
       } else {
-        // Modo creación
         const fechaCreado = getUnixTime(new Date());
         await agregarProyecto({
           ...datosProyectoNuevo,
           fechaCreado
         });
-
         cambiarEstadoAlerta(true);
-        cambiarAlerta({
-          tipo: 'exito',
-          mensaje: 'Proyecto creado con éxito 🎉'
-        });
+        cambiarAlerta({ tipo: 'exito', mensaje: 'Proyecto creado con éxito 🎉' });
 
-        // Limpieza del formulario solo en creación
         setNombreProyecto('');
         setDescripcion('');
         setTamanioProyecto('');
@@ -365,10 +323,7 @@ const FormularioProyecto = ( {proyecto} )=> {
         setIterativoProyecto('');
         setTipoProyecto('');
       }
-
-      // Redirigir tras un pequeño delay si quieres
       setTimeout(() => navigate('/lista'), 1500);
-
     } catch (error) {
       console.error(error);
       cambiarEstadoAlerta(true);
@@ -376,19 +331,18 @@ const FormularioProyecto = ( {proyecto} )=> {
         tipo: 'error',
         mensaje: 'Hubo un problema al guardar el proyecto. Intenta nuevamente.'
       });
-  }
-
+    }
   };
 
   // 🚀 Función simulada IA
   const obtenerMetodologiaIA = async (datos) => {
     try {
       const prompt = `
-        Eres un **consultor senior en gestión de proyectos de TI** con más de 15 años de experiencia aplicando metodologías de ciclo de vida y frameworks ágiles.
+        Eres un consultor senior en gestión de proyectos de TI con más de 15 años de experiencia aplicando metodologías de ciclo de vida y frameworks ágiles.
 
         INSTRUCCIONES ESTRICTAS  
         1. Analiza únicamente la información contenida en el objeto JSON proyecto.  
-        2. Elige **exactamente una** de las siguientes opciones:  
+        2. Elige exactamente una de las siguientes opciones:  
 
           Waterfall
           Iterativo  
@@ -405,10 +359,10 @@ const FormularioProyecto = ( {proyecto} )=> {
           Crystal  
           Lean Software Development  
 
-        3. Selecciona la opción que **mejor se ajuste** a las características recibidas.  
-        4. **No combines** opciones ni inventes variantes.  
-        5. **No expliques** tu elección ni añadas texto adicional.  
-        6. Devuelve **solo** el nombre exacto de la metodología o framework elegido, sin comillas.
+        3. Selecciona la opción que mejor se ajuste a las características recibidas.  
+        4. No combines opciones ni inventes variantes.  
+        5. No expliques tu elección ni añadas texto adicional.  
+        6. Devuelve solo el nombre exacto de la metodología o framework elegido, sin comillas.
 
         json
         {
@@ -420,16 +374,12 @@ const FormularioProyecto = ( {proyecto} )=> {
             "presenciaCliente":  ${datos.presenciaCliente}                   
           }
         }
-
         `;
-  
       const respuesta = await axios.post("https://backendscope-hkg5a4g8d7dsdwdh.canadacentral-01.azurewebsites.net/api/chat", {
         mensaje: prompt,
       });
-  
       const metodologiaPropuesta = respuesta.data.respuesta?.content || "No se pudo obtener una metodología.";
       return metodologiaPropuesta;
-  
     } catch (error) {
       console.error("Error al obtener la metodología mediante IA:", error);
       return "Error al obtener metodología IA.";
@@ -439,21 +389,20 @@ const FormularioProyecto = ( {proyecto} )=> {
   return (
     <div>
       <Helmet>
-        <title>Crear Proyecto</title>
+        <title>{proyecto ? "Editar Proyecto" : "Crear Proyecto"}</title>
       </Helmet>
 
       <Header>
         <ContenedorHeader>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <BtnRegresar />
-          <Titulo>Nuevo Proyecto</Titulo>
+            <Titulo>{proyecto ? "Editar Proyecto" : "Nuevo Proyecto"}</Titulo>
           </div>
         </ContenedorHeader>
       </Header>
 
       <Formulario onSubmit={handleSubmit}>
         <TarjetaFormulario>
-
           <CampoProyecto>
             <Label htmlFor="nombreProyecto">Nombre del Proyecto</Label>
             <InputProyecto
@@ -465,12 +414,30 @@ const FormularioProyecto = ( {proyecto} )=> {
               onChange={(e) => setNombreProyecto(e.target.value)}
             />
           </CampoProyecto>
+
+          {/* Muestra campos solo si es edición */}
+          {proyecto && (
+            <>
+              <CampoProyecto>
+                <Label>UID del creador</Label>
+                <InputProyecto
+                  type="text"
+                  value={
+                    proyecto.uidUsuario ||
+                    usuario?.uid ||
+                    "No disponible"
+                  }
+                  disabled
+                />
+              </CampoProyecto>
+            </>
+          )}
+
           <CampoProyecto>
             <LabelBotonContainer>
               <Label htmlFor="descripcion">Descripción del Proyecto</Label>
               <BotonInfo mensaje="Describe normas/compliance (ISO u otros), nivel de documentación inicial y de avance, disponibilidad de recursos y roles involucrados." />
             </LabelBotonContainer>
-
             <InputProyecto
               as="textarea"
               id="descripcion"
@@ -484,13 +451,12 @@ const FormularioProyecto = ( {proyecto} )=> {
           </CampoProyecto>
 
           <SelectsGrid>
-            <SelectTamanioProyecto valor={tamanioProyecto} cambiarValor={setTamanioProyecto} />            
+            <SelectTamanioProyecto valor={tamanioProyecto} cambiarValor={setTamanioProyecto} />
             <SelectComplejoRiesgos valor={complejoRiesgos} cambiarValor={setComplejoRiesgos} />
             <SelectPresenciaCliente valor={presenciaCliente} cambiarValor={setPresenciaCliente} />
             <SelectIterativoProyecto valor={iterativoProyecto} cambiarValor={setIterativoProyecto} />
             <SelectTipoProyecto valor={tipoProyecto} cambiarValor={setTipoProyecto} />
-            {/* Switch IA */}
-            <ContenedorIA>
+            <ContenedorIA usarIA={usarIA}>
               <TextoIA>
                 <strong>¿Usar Inteligencia Artificial?</strong><br />
                 Deja que la IA elija automáticamente la metodología más adecuada en base a las características del proyecto.
@@ -500,16 +466,12 @@ const FormularioProyecto = ( {proyecto} )=> {
                 <span />
               </SwitchIA>
             </ContenedorIA>
-
           </SelectsGrid>
-
-          
 
           <ContenedorBotonesAccion>
             <BotonCancelar type="button" onClick={() => window.history.back()}>
               Cancelar
             </BotonCancelar>
-
             <BotonCrear type="submit">
               {proyecto ? 'Actualizar Proyecto' : 'Crear Proyecto'}
             </BotonCrear>
