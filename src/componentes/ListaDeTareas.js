@@ -1,3 +1,4 @@
+// Archivo: ListaDeTareas.jsx
 import React, { useState, useEffect } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./../firebase/firebaseConfig";
@@ -23,8 +24,67 @@ import { ReactComponent as IconoBorrar } from "./../imagenes/borrar.svg";
 import styled from "styled-components";
 import borrarTarea from "./../firebase/borrarTarea";
 import { Link } from "react-router-dom";
+import DiagramaGantt from "./DiagramaGantt";
 
-// === Estilos adicionales ===
+// Estilos atractivos para filtros y selects
+const StyledSelect = styled.select`
+  appearance: none;
+  border: none;
+  outline: none;
+  background: #e3edf7;
+  color: #222;
+  border-radius: 999px;
+  font-size: 1rem;
+  padding: 0.6rem 1.6rem 0.6rem 0.9rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  box-shadow: 0 2px 10px 0 #e3edf780;
+  transition: background 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  &:hover, &:focus {
+    background: #cde7fd;
+    box-shadow: 0 4px 18px 0 #a1c4fd80;
+  }
+`;
+
+const StyledInput = styled.input`
+  border: none;
+  outline: none;
+  background: #e3edf7;
+  color: #222;
+  border-radius: 999px;
+  font-size: 1rem;
+  padding: 0.6rem 1.2rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  box-shadow: 0 2px 10px 0 #e3edf780;
+  transition: background 0.15s, box-shadow 0.15s;
+  &:focus, &:hover {
+    background: #cde7fd;
+    box-shadow: 0 4px 18px 0 #a1c4fd80;
+  }
+`;
+
+const FiltrosContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f7fafc;
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 16px 0 #a1c4fd22;
+  align-items: flex-end;
+`;
+
+const FiltroLabel = styled.label`
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  color: #37474f;
+  font-size: 0.95rem;
+`;
+
 const Responsable = styled.div`
   background-color: #e1f5fe;
   padding: 0.25rem 0.5rem;
@@ -58,47 +118,22 @@ const ContenedorConfirmacion = styled.div`
   max-width: 400px;
 `;
 
+const VentanaDetalle = styled(VentanaConfirmacion)``;
+const ContenedorDetalle = styled(ContenedorConfirmacion)`
+  text-align: left;
+`;
+
 const SeccionDetalle = styled.div`
   margin-bottom: 1rem;
 `;
-
 const Etiqueta = styled.div`
   font-weight: bold;
   color: #37474f;
   margin-bottom: 0.3rem;
 `;
-
 const Contenido = styled.div`
   color: #455a64;
   font-size: 0.95rem;
-`;
-
-const BotonConfirmar = styled.button`
-  background-color: #d32f2f;
-  color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
-  margin: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-`;
-
-const BotonCancelar = styled.button`
-  background-color: #bdbdbd;
-  color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
-  margin: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-`;
-
-const VentanaDetalle = styled(VentanaConfirmacion)``;
-
-const ContenedorDetalle = styled(ContenedorConfirmacion)`
-  text-align: left;
 `;
 
 const coloresEstado = {
@@ -120,18 +155,35 @@ const Estado = styled.span`
 `;
 
 const ListaDeTareas = ({ id }) => {
-  // Hooks y estados
   const [tareas, setTareas, obtenerMasTareas, hayMasPorCargar] = useObtenerTareas(id);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [tareaAEliminar, setTareaAEliminar] = useState(null);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
   const [mapaUsuarios, setMapaUsuarios] = useState({});
 
+  // Estados de filtrado
+  const [filterType, setFilterType] = useState('Todos');
+  const [filterValue, setFilterValue] = useState('');
+  const [filterMes, setFilterMes] = useState('');
+  const [filterAnio, setFilterAnio] = useState('');
+
+  // Meses y años dinámicos
+  const meses = [
+    { value: '1', label: 'Enero' }, { value: '2', label: 'Febrero' },
+    { value: '3', label: 'Marzo' }, { value: '4', label: 'Abril' },
+    { value: '5', label: 'Mayo' }, { value: '6', label: 'Junio' },
+    { value: '7', label: 'Julio' }, { value: '8', label: 'Agosto' },
+    { value: '9', label: 'Septiembre' }, { value: '10', label: 'Octubre' },
+    { value: '11', label: 'Noviembre' }, { value: '12', label: 'Diciembre' }
+  ];
+  const anios = Array.from(new Set(
+    tareas.map(t => new Date(t.fechaCreado * 1000).getFullYear())
+  )).sort((a, b) => b - a);
+
   useEffect(() => {
     const obtenerResponsables = async () => {
       const uids = new Set();
       tareas.forEach(t => Array.isArray(t.responsables) && t.responsables.forEach(r => uids.add(r)));
-
       const usuariosObtenidos = {};
       await Promise.all(
         Array.from(uids).map(async uid => {
@@ -148,23 +200,42 @@ const ListaDeTareas = ({ id }) => {
       );
       setMapaUsuarios(usuariosObtenidos);
     };
-
     if (tareas.length) obtenerResponsables();
   }, [tareas]);
 
   const formatearFecha = fecha =>
     format(fromUnixTime(fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
 
-  const tareasAgrupadas = tareas.reduce((acc, t) => {
+  const tareasFiltradas = tareas.filter(t => {
+    if (filterType === 'Todos') return true;
+    if (filterType === 'Mes') {
+      if (!filterMes || !filterAnio) return true;
+      const date = new Date(t.fechaCreado * 1000);
+      return date.getFullYear() === parseInt(filterAnio, 10)
+          && date.getMonth() + 1 === parseInt(filterMes, 10);
+    }
+    if (filterType === 'Día') {
+      if (!filterValue) return true;
+      return format(fromUnixTime(t.fechaCreado), 'yyyy-MM-dd') === filterValue;
+    }
+    if (filterType === 'Estado')
+      return !filterValue || t.estadoTarea === filterValue;
+    if (filterType === 'Responsable')
+      return !filterValue
+          || (Array.isArray(t.responsables) && t.responsables.includes(filterValue));
+    return true;
+  });
+
+  const tareasAgrupadas = tareasFiltradas.reduce((acc, t) => {
     const fecha = formatearFecha(t.fechaCreado);
-    acc[fecha] = acc[fecha] || [];
+    if (!acc[fecha]) acc[fecha] = [];
     acc[fecha].push(t);
     return acc;
   }, {});
 
-  const fechasOrdenadas = Object.keys(tareasAgrupadas).sort((a, b) => new Date(b) - new Date(a));
+  const fechasOrdenadas = Object.keys(tareasAgrupadas)
+    .sort((a, b) => new Date(b) - new Date(a));
 
-  // Confirmación eliminación
   const confirmarEliminacion = tarea => {
     setTareaAEliminar(tarea);
     setMostrarConfirmacion(true);
@@ -185,76 +256,202 @@ const ListaDeTareas = ({ id }) => {
 
   return (
     <>
+      <FiltrosContainer>
+        <FiltroLabel>
+          Filtrar por
+          <StyledSelect
+            value={filterType}
+            onChange={e => {
+              setFilterType(e.target.value);
+              setFilterValue('');
+              setFilterMes('');
+              setFilterAnio('');
+            }}
+          >
+            <option value="Todos">Todos</option>
+            <option value="Mes">Mes</option>
+            <option value="Día">Día</option>
+            <option value="Estado">Estado</option>
+            <option value="Responsable">Responsable</option>
+            <option value="Gantt">Diagrama de Gantt</option>
+          </StyledSelect>
+        </FiltroLabel>
 
-      {/* Listado */}
-      <Lista>
-        {fechasOrdenadas.map(fecha => (
-          <div key={fecha}>
-            <Fecha>{fecha}</Fecha>
-            <ContenedorTareasPorFecha>
-              {tareasAgrupadas[fecha].map(tarea => (
-                <ElementoLista key={tarea.id}>
-                  <Descripcion>
-                    <strong>{tarea.nombreTarea}</strong>
-                  </Descripcion>
-                  <Descripcion>Fin: {formatearFecha(tarea.fechaVencimiento)}</Descripcion>
-                  <Descripcion>
-                    Estado: <Estado color={coloresEstado[tarea.estadoTarea]}>{tarea.estadoTarea}</Estado>
-                  </Descripcion>
-                  <Descripcion>
-                    Responsables:{" "}
-                    {Array.isArray(tarea.responsables) && tarea.responsables.length > 0 ? (
-                      tarea.responsables.map((uid, i) => (
-                        <Responsable key={i}>{mapaUsuarios[uid] || "Cargando..."}</Responsable>
-                      ))
-                    ) : (
-                      <em>No asignado</em>
-                    )}
-                  </Descripcion>
-                  <ContenedorBotones>
-                    <BotonAccion title="Eliminar tarea" onClick={() => confirmarEliminacion(tarea)}>
-                      <IconoBorrar />
-                    </BotonAccion>
-                    <BotonAccion as={Link} to={`/editarTarea/${id}/${tarea.id}`} title="Editar tarea">
-                      <IconoEditar />
-                    </BotonAccion>
-                    <BotonAccion title="Ver tarea" onClick={() => setTareaSeleccionada(tarea)}>
-                      <IconoVer />
-                    </BotonAccion>
-                  </ContenedorBotones>
-                </ElementoLista>
+        {filterType === "Mes" && (
+          <>
+            <FiltroLabel>
+              Mes
+              <StyledSelect
+                value={filterMes}
+                onChange={e => setFilterMes(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {meses.map(m => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </StyledSelect>
+            </FiltroLabel>
+
+            <FiltroLabel>
+              Año
+              <StyledSelect
+                value={filterAnio}
+                onChange={e => setFilterAnio(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {anios.map(a => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </StyledSelect>
+            </FiltroLabel>
+          </>
+        )}
+
+        {filterType === "Día" && (
+          <FiltroLabel>
+            Fecha Inicio
+            <StyledInput
+              type="date"
+              value={filterValue}
+              onChange={e => setFilterValue(e.target.value)}
+            />
+          </FiltroLabel>
+        )}
+
+        {filterType === "Estado" && (
+          <FiltroLabel>
+            Estado
+            <StyledSelect
+              value={filterValue}
+              onChange={e => setFilterValue(e.target.value)}
+            >
+              <option value="">Todos</option>
+              {Object.keys(coloresEstado).map(estado => (
+                <option key={estado} value={estado}>
+                  {estado}
+                </option>
               ))}
-            </ContenedorTareasPorFecha>
-          </div>
-        ))}
-
-        {!tareas.length && (
-          <ContenedorSubtitulo>
-            <Subtitulo>No hay tareas registradas</Subtitulo>
-          </ContenedorSubtitulo>
+            </StyledSelect>
+          </FiltroLabel>
         )}
 
-        {hayMasPorCargar && (
-          <ContenedorBotonCentral>
-            <BotonCargarMas onClick={obtenerMasTareas}>Cargar Más</BotonCargarMas>
-          </ContenedorBotonCentral>
+        {filterType === "Responsable" && (
+          <FiltroLabel>
+            Responsable
+            <StyledSelect
+              value={filterValue}
+              onChange={e => setFilterValue(e.target.value)}
+            >
+              <option value="">Todos</option>
+              {Object.entries(mapaUsuarios).map(([uid, name]) => (
+                <option key={uid} value={uid}>
+                  {name}
+                </option>
+              ))}
+            </StyledSelect>
+          </FiltroLabel>
         )}
-      </Lista>
+      </FiltrosContainer>
+
+      {/* Mostrar lista o gantt según filtro */}
+      {filterType === "Gantt" ? (
+        <div style={{ marginTop: "2rem" }}>
+          <DiagramaGantt tareas={tareasFiltradas} />
+        </div>
+      ) : (
+        <Lista>
+          {fechasOrdenadas.map(fecha => (
+            <div key={fecha}>
+              <Fecha>{fecha}</Fecha>
+              <ContenedorTareasPorFecha>
+                {tareasAgrupadas[fecha].map(tarea => (
+                  <ElementoLista key={tarea.id}>
+                    <Descripcion>
+                      <strong>{tarea.nombreTarea}</strong>
+                    </Descripcion>
+                    <Descripcion>
+                      Fin: {formatearFecha(tarea.fechaVencimiento)}
+                    </Descripcion>
+                    <Descripcion>
+                      Estado:{" "}
+                      <Estado color={coloresEstado[tarea.estadoTarea]}>
+                        {tarea.estadoTarea}
+                      </Estado>
+                    </Descripcion>
+                    <Descripcion>
+                      Responsables:{" "}
+                      {Array.isArray(tarea.responsables) && tarea.responsables.length > 0 ? (
+                        tarea.responsables.map((uid, i) => (
+                          <Responsable key={i}>
+                            {mapaUsuarios[uid] || "Cargando..."}
+                          </Responsable>
+                        ))
+                      ) : (
+                        <em>No asignado</em>
+                      )}
+                    </Descripcion>
+                    <ContenedorBotones>
+                      <BotonAccion
+                        title="Eliminar tarea"
+                        onClick={() => confirmarEliminacion(tarea)}
+                      >
+                        <IconoBorrar />
+                      </BotonAccion>
+                      <BotonAccion
+                        as={Link}
+                        to={`/editarTarea/${id}/${tarea.id}`}
+                        title="Editar tarea"
+                      >
+                        <IconoEditar />
+                      </BotonAccion>
+                      <BotonAccion
+                        title="Ver tarea"
+                        onClick={() => setTareaSeleccionada(tarea)}
+                      >
+                        <IconoVer />
+                      </BotonAccion>
+                    </ContenedorBotones>
+                  </ElementoLista>
+                ))}
+              </ContenedorTareasPorFecha>
+            </div>
+          ))}
+
+          {!tareasFiltradas.length && (
+            <ContenedorSubtitulo>
+              <Subtitulo>No hay tareas que coincidan con el filtro</Subtitulo>
+            </ContenedorSubtitulo>
+          )}
+
+          {hayMasPorCargar && (
+            <ContenedorBotonCentral>
+              <BotonCargarMas onClick={obtenerMasTareas}>
+                Cargar Más
+              </BotonCargarMas>
+            </ContenedorBotonCentral>
+          )}
+        </Lista>
+      )}
 
       {/* Modal de confirmación */}
       {mostrarConfirmacion && (
         <VentanaConfirmacion>
           <ContenedorConfirmacion>
             <p>
-              ¿Eliminar tarea <strong>{tareaAEliminar?.nombreTarea}</strong>?
+              ¿Eliminar tarea{" "}
+              <strong>{tareaAEliminar?.nombreTarea}</strong>?
             </p>
-            <BotonConfirmar onClick={eliminarTarea}>Eliminar</BotonConfirmar>
-            <BotonCancelar onClick={cancelarEliminacion}>Cancelar</BotonCancelar>
+            <button onClick={eliminarTarea}>Eliminar</button>
+            <button onClick={cancelarEliminacion}>Cancelar</button>
           </ContenedorConfirmacion>
         </VentanaConfirmacion>
       )}
 
-      {/* Modal de detalles */}
+      {/* Modal de detalle */}
       {tareaSeleccionada && (
         <VentanaDetalle onClick={() => setTareaSeleccionada(null)}>
           <ContenedorDetalle onClick={e => e.stopPropagation()}>
@@ -263,7 +460,9 @@ const ListaDeTareas = ({ id }) => {
             </h2>
             <SeccionDetalle>
               <Etiqueta>Descripción:</Etiqueta>
-              <Contenido>{tareaSeleccionada.descripcionTarea || "No proporcionada"}</Contenido>
+              <Contenido>
+                {tareaSeleccionada.descripcionTarea || "No proporcionada"}
+              </Contenido>
             </SeccionDetalle>
             <SeccionDetalle>
               <Etiqueta>Estado:</Etiqueta>
@@ -273,7 +472,9 @@ const ListaDeTareas = ({ id }) => {
             </SeccionDetalle>
             <SeccionDetalle>
               <Etiqueta>Fecha de Vencimiento:</Etiqueta>
-              <Contenido>{formatearFecha(tareaSeleccionada.fechaVencimiento)}</Contenido>
+              <Contenido>
+                {formatearFecha(tareaSeleccionada.fechaVencimiento)}
+              </Contenido>
             </SeccionDetalle>
             <SeccionDetalle>
               <Etiqueta>Responsables:</Etiqueta>
@@ -281,7 +482,9 @@ const ListaDeTareas = ({ id }) => {
                 {Array.isArray(tareaSeleccionada.responsables) &&
                 tareaSeleccionada.responsables.length > 0 ? (
                   tareaSeleccionada.responsables.map((uid, i) => (
-                    <Responsable key={i}>{mapaUsuarios[uid] || "Cargando..."}</Responsable>
+                    <Responsable key={i}>
+                      {mapaUsuarios[uid] || "Cargando..."}
+                    </Responsable>
                   ))
                 ) : (
                   <Contenido>

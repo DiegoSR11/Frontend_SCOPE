@@ -10,8 +10,31 @@ import logo from './../imagenes/logo-celeste.png';
 import { Header, ContenedorBotones, ContenedorLogo, LogoImg } from './../elementos/Header';
 import BotonCerrarSesion from './../elementos/BotonCerrarSesion';
 import Alerta from '../elementos/Alerta';
-import { Mail, Phone, Building2, Briefcase, Globe, MapPin } from 'lucide-react';
+import { Mail, Phone, Building2, Briefcase, Globe, MapPin, Pencil } from 'lucide-react';
 import Cargando from "./../elementos/Cargando";
+
+// Botón Editar Perfil estilizado
+const BotonEditarPerfil = styled(Link)`
+  background: linear-gradient(90deg, #2196f3, #00bcd4);
+  color: #fff;
+  font-weight: bold;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 0.5rem 1.3rem;
+  font-size: 1rem;
+  margin-left: 1.3rem;
+  margin-right: 0.5rem;
+  box-shadow: 0 2px 10px #0d47a11a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: background 0.16s, transform 0.12s;
+  &:hover {
+    background: linear-gradient(90deg, #1976d2, #00acc1);
+    transform: scale(1.04);
+  }
+`;
 
 const ContenedorPerfil = styled.div`
   max-width: 800px;
@@ -34,7 +57,6 @@ const DatosGrid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.5rem;
-
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
@@ -60,12 +82,10 @@ const Icono = styled.div`
 const TextoDato = styled.div`
   display: flex;
   flex-direction: column;
-
   span {
     font-size: 0.85rem;
     color: #666;
   }
-
   strong {
     font-size: 1rem;
     color: #222;
@@ -90,19 +110,16 @@ const PerfilUsuario = () => {
       navigate('/iniciar-sesion');
       return;
     }
-
     if (id !== usuario.uid) {
       setAlerta({ tipo: 'error', mensaje: 'No tienes permiso para ver este perfil.' });
       setEstadoAlerta(true);
       navigate('/inicio');
       return;
     }
-
     const obtenerUsuario = async () => {
       try {
         const usuarioRef = doc(db, 'usuarios', id);
         const docSnap = await getDoc(usuarioRef);
-
         if (docSnap.exists()) {
           setUsuarioData(docSnap.data());
         } else {
@@ -116,7 +133,6 @@ const PerfilUsuario = () => {
         setLoading(false);
       }
     };
-
     obtenerUsuario();
   }, [id, usuario, navigate]);
 
@@ -153,6 +169,13 @@ const PerfilUsuario = () => {
             </Link>
           </ContenedorLogo>
         )}
+
+        {/* Botón Editar Perfil */}
+        <BotonEditarPerfil to={`/editar-usuario/${usuario?.uid}`}>
+          <Pencil size={18} style={{ marginRight: 5 }} />
+          Editar perfil
+        </BotonEditarPerfil>
+
         <ContenedorBotones>
           <BotonCerrarSesion />
         </ContenedorBotones>
@@ -221,7 +244,6 @@ const PerfilUsuario = () => {
               <strong>{usuarioData.correo}</strong>
             </TextoDato>
           </TarjetaDato>
-
           <TarjetaDato>
             <Icono><Phone size={20} /></Icono>
             <TextoDato>
@@ -229,7 +251,6 @@ const PerfilUsuario = () => {
               <strong>{usuarioData.celular}</strong>
             </TextoDato>
           </TarjetaDato>
-
           <TarjetaDato>
             <Icono><Building2 size={20} /></Icono>
             <TextoDato>
@@ -237,7 +258,6 @@ const PerfilUsuario = () => {
               <strong>{usuarioData.empresa}</strong>
             </TextoDato>
           </TarjetaDato>
-
           <TarjetaDato>
             <Icono><Briefcase size={20} /></Icono>
             <TextoDato>
@@ -245,7 +265,6 @@ const PerfilUsuario = () => {
               <strong>{usuarioData.area} - {usuarioData.rol}</strong>
             </TextoDato>
           </TarjetaDato>
-
           <TarjetaDato>
             <Icono><Globe size={20} /></Icono>
             <TextoDato>
@@ -253,7 +272,6 @@ const PerfilUsuario = () => {
               <strong>{usuarioData.pais}</strong>
             </TextoDato>
           </TarjetaDato>
-
           <TarjetaDato>
             <Icono><MapPin size={20} /></Icono>
             <TextoDato>
@@ -262,8 +280,6 @@ const PerfilUsuario = () => {
             </TextoDato>
           </TarjetaDato>
         </DatosGrid>
-
-
 
         <Alerta
           tipo={alerta.tipo}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./../firebase/firebaseConfig";
-import { collection, onSnapshot, query, orderBy, limit, startAfter } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, startAfter } from "firebase/firestore";
 
 const useObtenerRiesgos = (idProyecto) => {
   const [riesgos, setRiesgos] = useState([]);
@@ -13,7 +13,6 @@ const useObtenerRiesgos = (idProyecto) => {
     const consulta = query(
       collection(db, "proyectos", idProyecto, "riesgos"),
       orderBy("fechaCreado", "desc"),
-      limit(10)
     );
 
     const unsuscribe = onSnapshot(
@@ -45,7 +44,6 @@ const useObtenerRiesgos = (idProyecto) => {
       collection(db, "proyectos", idProyecto, "riesgos"),
       orderBy("fechaCreado", "desc"),
       startAfter(ultimoRiesgo),
-      limit(10)
     );
 
     onSnapshot(consulta, (snapshot) => {

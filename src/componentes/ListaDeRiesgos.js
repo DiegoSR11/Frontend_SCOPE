@@ -18,11 +18,85 @@ import { es } from "date-fns/locale";
 import { ReactComponent as IconoEditar } from "./../imagenes/editar.svg";
 import { ReactComponent as IconoVer } from "./../imagenes/view.svg";
 import { ReactComponent as IconoBorrar } from "./../imagenes/borrar.svg";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import borrarRiesgo from "./../firebase/borrarRiesgo";
 import { Link } from "react-router-dom";
 
-// === Estilos adicionales ===
+// Pill-style filter buttons
+const FilterButtonGroup = styled.div`
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  margin-bottom: 0.2rem;
+`;
+const FilterButton = styled.button`
+  padding: 0.45rem 1.2rem;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  background: #e3edf7;
+  color: #2563eb;
+  cursor: pointer;
+  font-size: 0.97rem;
+  box-shadow: 0 2px 8px #cbd5e150;
+  letter-spacing: 0.03em;
+  ${(props) =>
+    props.active &&
+    css`
+      background: linear-gradient(90deg, #2563eb 70%, #ff9800 100%);
+      color: #fff;
+      box-shadow: 0 4px 16px #2563eb33;
+      transform: scale(1.04);
+    `}
+  &:hover, &:focus {
+    background: #bae6fd;
+    color: #1e293b;
+    outline: none;
+    transform: scale(1.02);
+  }
+`;
+
+const StyledSelect = styled.select`
+  margin-top: 0.15rem;
+  padding: 0.42rem 0.8rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 0.7rem;
+  background: #f8fafc;
+  font-size: 0.97rem;
+  font-weight: 600;
+  color: #2b2d42;
+  &:focus {
+    border-color: #2563eb;
+    background: #e0f2fe;
+  }
+`;
+
+const StyledInput = styled.input`
+  margin-top: 0.15rem;
+  padding: 0.42rem 0.8rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 0.7rem;
+  background: #f8fafc;
+  font-size: 0.97rem;
+  font-weight: 500;
+  color: #22223b;
+  &:focus {
+    border-color: #2563eb;
+    background: #e0f2fe;
+  }
+`;
+
+const FiltrosContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.4rem 2.2rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f1f5f9;
+  border-radius: 1.2rem;
+  align-items: flex-end;
+`;
+
 const VentanaConfirmacion = styled.div`
   position: fixed;
   top: 0;
@@ -68,7 +142,6 @@ const BotonCancelar = styled.button`
 `;
 
 const VentanaDetalle = styled(VentanaConfirmacion)``;
-
 const ContenedorDetalle = styled(ContenedorConfirmacion)`
   text-align: left;
   padding: 2rem;
@@ -107,16 +180,72 @@ const Resaltado = styled.span`
   font-weight: bold;
 `;
 
+const filtrosDisponibles = [
+  { value: "Todos", label: "Todos" },
+  { value: "Mes", label: "Mes" },
+  { value: "Día", label: "Día" },
+  { value: "Probabilidad", label: "Probabilidad" },
+  { value: "Impacto", label: "Impacto" }
+];
+
+const probabilidades = [
+  "Probabilidad Alta",
+  "Probabilidad Media",
+  "Probabilidad Baja"
+];
+const impactos = [
+  "Impacto Alto",
+  "Impacto Medio",
+  "Impacto Bajo"
+];
+
 const ListaDeRiesgos = ({ id }) => {
   const [riesgos, setRiesgos, obtenerMasRiesgos, hayMasPorCargar] = useObtenerRiesgos(id);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [riesgoAEliminar, setRiesgoAEliminar] = useState(null);
   const [riesgoSeleccionado, setRiesgoSeleccionado] = useState(null);
 
+  // Estados de filtrado
+  const [filterType, setFilterType] = useState('Todos');
+  const [filterValue, setFilterValue] = useState('');
+  const [filterMes, setFilterMes] = useState('');
+  const [filterAnio, setFilterAnio] = useState('');
+
+  const meses = [
+    { value: '1', label: 'Enero' }, { value: '2', label: 'Febrero' },
+    { value: '3', label: 'Marzo' }, { value: '4', label: 'Abril' },
+    { value: '5', label: 'Mayo' }, { value: '6', label: 'Junio' },
+    { value: '7', label: 'Julio' }, { value: '8', label: 'Agosto' },
+    { value: '9', label: 'Septiembre' }, { value: '10', label: 'Octubre' },
+    { value: '11', label: 'Noviembre' }, { value: '12', label: 'Diciembre' }
+  ];
+  const anios = Array.from(new Set(
+    riesgos.map(r => new Date(r.fechaCreado * 1000).getFullYear())
+  )).sort((a, b) => b - a);
+
   const formatearFecha = (fecha) =>
     format(fromUnixTime(fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
 
-  const riesgosAgrupados = riesgos.reduce((acc, riesgo) => {
+  const riesgosFiltrados = riesgos.filter(riesgo => {
+    if (filterType === 'Todos') return true;
+    if (filterType === 'Mes') {
+      if (!filterMes || !filterAnio) return true;
+      const date = new Date(riesgo.fechaCreado * 1000);
+      return date.getFullYear() === parseInt(filterAnio, 10)
+          && date.getMonth() + 1 === parseInt(filterMes, 10);
+    }
+    if (filterType === 'Día') {
+      if (!filterValue) return true;
+      return format(fromUnixTime(riesgo.fechaCreado), 'yyyy-MM-dd') === filterValue;
+    }
+    if (filterType === 'Probabilidad')
+      return !filterValue || riesgo.probabilidad === filterValue;
+    if (filterType === 'Impacto')
+      return !filterValue || riesgo.impacto === filterValue;
+    return true;
+  });
+
+  const riesgosAgrupados = riesgosFiltrados.reduce((acc, riesgo) => {
     const fechaFormateada = formatearFecha(riesgo.fechaCreado);
     if (!acc[fechaFormateada]) acc[fechaFormateada] = [];
     acc[fechaFormateada].push(riesgo);
@@ -150,6 +279,100 @@ const ListaDeRiesgos = ({ id }) => {
 
   return (
     <>
+      <FiltrosContainer>
+        <FilterButtonGroup>
+          {filtrosDisponibles.map(filtro => (
+            <FilterButton
+              key={filtro.value}
+              active={filterType === filtro.value}
+              onClick={() => {
+                setFilterType(filtro.value);
+                setFilterValue('');
+                setFilterMes('');
+                setFilterAnio('');
+              }}
+              type="button"
+            >
+              {filtro.label}
+            </FilterButton>
+          ))}
+        </FilterButtonGroup>
+
+        {filterType === "Mes" && (
+          <>
+            <label>
+              Mes
+              <StyledSelect
+                value={filterMes}
+                onChange={e => setFilterMes(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {meses.map(m => (
+                  <option key={m.value} value={m.value}>
+                    {m.label}
+                  </option>
+                ))}
+              </StyledSelect>
+            </label>
+            <label>
+              Año
+              <StyledSelect
+                value={filterAnio}
+                onChange={e => setFilterAnio(e.target.value)}
+              >
+                <option value="">Todos</option>
+                {anios.map(a => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </StyledSelect>
+            </label>
+          </>
+        )}
+
+        {filterType === "Día" && (
+          <label>
+            Fecha Inicio
+            <StyledInput
+              type="date"
+              value={filterValue}
+              onChange={e => setFilterValue(e.target.value)}
+            />
+          </label>
+        )}
+
+        {filterType === "Probabilidad" && (
+          <label>
+            Probabilidad
+            <StyledSelect
+              value={filterValue}
+              onChange={e => setFilterValue(e.target.value)}
+            >
+              <option value="">Todas</option>
+              {probabilidades.map(op => (
+                <option key={op} value={op}>{op}</option>
+              ))}
+            </StyledSelect>
+          </label>
+        )}
+
+        {filterType === "Impacto" && (
+          <label>
+            Impacto
+            <StyledSelect
+              value={filterValue}
+              onChange={e => setFilterValue(e.target.value)}
+            >
+              <option value="">Todos</option>
+              {impactos.map(op => (
+                <option key={op} value={op}>{op}</option>
+              ))}
+            </StyledSelect>
+          </label>
+        )}
+      </FiltrosContainer>
+
       <Lista>
         {fechasOrdenadas.map((fecha) => (
           <div key={fecha}>
@@ -182,9 +405,9 @@ const ListaDeRiesgos = ({ id }) => {
           </div>
         ))}
 
-        {riesgos.length === 0 && (
+        {riesgosFiltrados.length === 0 && (
           <ContenedorSubtitulo>
-            <Subtitulo>No hay riesgos registrados</Subtitulo>
+            <Subtitulo>No hay riesgos que coincidan con el filtro</Subtitulo>
           </ContenedorSubtitulo>
         )}
 

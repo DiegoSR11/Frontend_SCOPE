@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./../firebase/firebaseConfig";
-import { collection, onSnapshot, query, orderBy, limit, startAfter } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, startAfter } from "firebase/firestore";
 
 const useObtenerTareas = (idProyecto) => {
   const [tareas, setTareas] = useState([]);
@@ -13,7 +13,6 @@ const useObtenerTareas = (idProyecto) => {
     const consulta = query(
       collection(db, "proyectos", idProyecto, "tareas"), 
       orderBy("fechaCreado", "desc"),
-      limit(10)
     );
 
     const unsuscribe = onSnapshot(
@@ -45,7 +44,6 @@ const useObtenerTareas = (idProyecto) => {
       collection(db, "proyectos", idProyecto, "tareas"),
       orderBy("fechaCreado", "desc"),
       startAfter(ultimaTarea),
-      limit(10)
     );
 
     onSnapshot(consulta, (snapshot) => {

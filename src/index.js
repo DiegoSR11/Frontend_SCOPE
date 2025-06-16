@@ -47,7 +47,12 @@ const Index = () => {
           <Routes>
             <Route path='/iniciar-sesion' element={<InicioSesion/>}/>
             <Route path='/crear-cuenta' element={<RegistroUsuarios/>}/>
-            
+            <Route path='/editar-usuario/:id' element={
+              <RutaPrivada>
+                <RegistroUsuarios />
+              </RutaPrivada>
+            }/>
+
             <Route path='/categorias' element={
               <RutaPrivada>
                 <GastosPorCategoria />

@@ -1,3 +1,4 @@
+// Archivo: VerProyecto.jsx
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
@@ -9,10 +10,10 @@ import Cargando from "./../elementos/Cargando";
 import { ContenedorBoton } from "./../elementos/ElementosDeFormulario";
 import Boton from "./../elementos/Boton";
 
+import DetallesProyecto from "../componentes/DetallesProyecto";
 import ListaDeTareas from "../componentes/ListaDeTareas";
 import ListaDeRiesgos from "../componentes/ListaDeRiesgos";
 import ChatBotIA from "../componentes/ChatBotProyecto";
-import DetallesProyecto from "../componentes/DetallesProyecto";
 
 import useObtenerProyecto from "./../hooks/useObtenerProyecto";
 import useObtenerTareas from "../hooks/useObtenerTareas";
@@ -29,7 +30,7 @@ const ContenedorCentral = styled.div`
 const Tabs = styled.div`
   display: flex;
   gap: 0.5rem;
-  margin: 0.1rem 0 0.1rem;
+  margin: 0.1rem 0;
   width: 100%;
   flex-wrap: wrap;
 `;
@@ -54,7 +55,7 @@ const Tab = styled.button`
   }
 `;
 
-// Nuevo contenedor para alinear el botón y el logo
+// Agrupa acciones del header
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
