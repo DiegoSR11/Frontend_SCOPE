@@ -48,7 +48,6 @@ const BotonPrimarioGrande = styled.button`
   }
 `;
 
-// Botón cancelar más sutil, delgado y pegado abajo
 const BotonCancelar = styled.button`
   background: #fff;
   color: #00A9FF;
@@ -70,16 +69,8 @@ const BotonCancelar = styled.button`
   }
 `;
 
-const campos = [
-  { name: "nombre", label: "Nombre" },
-  { name: "apellido", label: "Apellido" },
-  { name: "celular", label: "Celular" },
-  { name: "empresa", label: "Empresa" },
-  { name: "area", label: "Área" },
-  { name: "rol", label: "Puesto o Rol" },
-  { name: "pais", label: "País" },
-  { name: "departamento", label: "Departamento" },
-];
+// Solo letras y espacios
+const soloLetras = texto => /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/.test(texto);
 
 const RegistroUsuarios = () => {
   const navigate = useNavigate();
@@ -143,30 +134,30 @@ const RegistroUsuarios = () => {
         setPassword2(value);
         break;
       case 'nombre':
-        setNombre(capitalizarCadaPalabra(value));
+        if (soloLetras(value)) setNombre(capitalizarCadaPalabra(value));
         break;
       case 'apellido':
-        setApellido(capitalizarCadaPalabra(value));
+        if (soloLetras(value)) setApellido(capitalizarCadaPalabra(value));
+        break;
+      case 'empresa':
+        if (soloLetras(value)) setEmpresa(capitalizar(value));
+        break;
+      case 'area':
+        if (soloLetras(value)) setArea(capitalizar(value));
+        break;
+      case 'rol':
+        if (soloLetras(value)) setRol(capitalizar(value));
+        break;
+      case 'pais':
+        if (soloLetras(value)) setPais(capitalizar(value));
+        break;
+      case 'departamento':
+        if (soloLetras(value)) setDepartamento(capitalizar(value));
         break;
       case 'celular':
         if (/^\d*$/.test(value)) {
           setCelular(value.slice(0, 9));
         }
-        break;
-      case 'empresa':
-        setEmpresa(capitalizar(value));
-        break;
-      case 'area':
-        setArea(capitalizar(value));
-        break;
-      case 'rol':
-        setRol(capitalizar(value));
-        break;
-      case 'pais':
-        setPais(capitalizar(value));
-        break;
-      case 'departamento':
-        setDepartamento(capitalizar(value));
         break;
       default:
         break;
@@ -177,6 +168,16 @@ const RegistroUsuarios = () => {
     const values = {
       nombre, apellido, celular, empresa, area, rol, pais, departamento
     };
+    const campos = [
+      { name: "nombre", label: "Nombres" },
+      { name: "apellido", label: "Apellidos" },
+      { name: "celular", label: "Celular" },
+      { name: "empresa", label: "Empresa" },
+      { name: "area", label: "Área" },
+      { name: "rol", label: "Puesto o Rol" },
+      { name: "pais", label: "País" },
+      { name: "departamento", label: "Departamento" },
+    ];
     const vacios = campos.filter(c => !values[c.name] || values[c.name].trim() === "");
 
     if (vacios.length === 1) {
@@ -192,7 +193,28 @@ const RegistroUsuarios = () => {
       };
     }
 
-    // Correo/contraseña solo en creación
+    if (!soloLetras(nombre)) {
+      return { tipo: "error", mensaje: "El nombre solo debe contener letras y espacios." };
+    }
+    if (!soloLetras(apellido)) {
+      return { tipo: "error", mensaje: "El apellido solo debe contener letras y espacios." };
+    }
+    if (!soloLetras(empresa)) {
+      return { tipo: "error", mensaje: "El campo Empresa solo debe contener letras y espacios." };
+    }
+    if (!soloLetras(area)) {
+      return { tipo: "error", mensaje: "El campo Área solo debe contener letras y espacios." };
+    }
+    if (!soloLetras(rol)) {
+      return { tipo: "error", mensaje: "El campo Puesto o Rol solo debe contener letras y espacios." };
+    }
+    if (!soloLetras(pais)) {
+      return { tipo: "error", mensaje: "El campo País solo debe contener letras y espacios." };
+    }
+    if (!soloLetras(departamento)) {
+      return { tipo: "error", mensaje: "El campo Departamento solo debe contener letras y espacios." };
+    }
+
     if (!esEdicion) {
       if (!correo || correo.trim() === "") {
         return { tipo: 'error', mensaje: 'Falta completar el campo: Correo Electrónico.' };
@@ -326,95 +348,128 @@ const RegistroUsuarios = () => {
           <LogoImg src={logo} alt="Logo" />
           <TituloSeccion>{usuarioEditar ? "Editar Perfil" : "Registrarse"}</TituloSeccion>
           <ContenedorInputsDosColumnas>
-            <InputEstilizado
-              type="text"
-              name="nombre"
-              placeholder="Nombre"
-              value={nombre}
-              onChange={handleChange}
-              required
-            />
-            <InputEstilizado
-              type="text"
-              name="apellido"
-              placeholder="Apellido"
-              value={apellido}
-              onChange={handleChange}
-              required
-            />
-            <InputEstilizado
-              type="text"
-              name="celular"
-              placeholder="Celular"
-              value={celular}
-              onChange={handleChange}
-              maxLength={9}
-              inputMode="numeric"
-              required
-            />
-            <InputEstilizado
-              type="text"
-              name="empresa"
-              placeholder="Empresa"
-              value={empresa}
-              onChange={handleChange}
-            />
-            <InputEstilizado
-              type="text"
-              name="area"
-              placeholder="Área"
-              value={area}
-              onChange={handleChange}
-            />
-            <InputEstilizado
-              type="text"
-              name="rol"
-              placeholder="Puesto o Rol"
-              value={rol}
-              onChange={handleChange}
-            />
-            <InputEstilizado
-              type="text"
-              name="pais"
-              placeholder="País"
-              value={pais}
-              onChange={handleChange}
-            />
-            <InputEstilizado
-              type="text"
-              name="departamento"
-              placeholder="Departamento"
-              value={departamento}
-              onChange={handleChange}
-            />
-            <InputEstilizado
-              type="email"
-              name="email"
-              placeholder="Correo Electrónico"
-              value={correo}
-              onChange={handleChange}
-              required
-              disabled={!!usuarioEditar}
-              style={usuarioEditar ? { background: "#f1f1f1", color: "#888" } : {}}
-            />
+            <div>
+              <label>Nombres</label>
+              <InputEstilizado
+                type="text"
+                name="nombre"
+                placeholder="Solo letras"
+                value={nombre}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <label>Apellidos</label>
+              <InputEstilizado
+                type="text"
+                name="apellido"
+                placeholder="Solo letras"
+                value={apellido}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div>
+              <label>Celular</label>
+              <InputEstilizado
+                type="text"
+                name="celular"
+                placeholder="Solo números (9 dígitos)"
+                value={celular}
+                onChange={handleChange}
+                maxLength={9}
+                inputMode="numeric"
+                required
+              />
+            </div>
+            <div>
+              <label>Empresa</label>
+              <InputEstilizado
+                type="text"
+                name="empresa"
+                placeholder="Solo letras"
+                value={empresa}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label>Área</label>
+              <InputEstilizado
+                type="text"
+                name="area"
+                placeholder="Solo letras"
+                value={area}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label>Puesto o Rol</label>
+              <InputEstilizado
+                type="text"
+                name="rol"
+                placeholder="Solo letras"
+                value={rol}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label>País</label>
+              <InputEstilizado
+                type="text"
+                name="pais"
+                placeholder="Solo letras"
+                value={pais}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label>Departamento</label>
+              <InputEstilizado
+                type="text"
+                name="departamento"
+                placeholder="Solo letras"
+                value={departamento}
+                onChange={handleChange}
+              />
+            </div>
+            <div>
+              <label>Correo Electrónico</label>
+              <InputEstilizado
+                type="email"
+                name="email"
+                placeholder="Ejemplo: correo@dominio.com"
+                value={correo}
+                onChange={handleChange}
+                required
+                disabled={!!usuarioEditar}
+                style={usuarioEditar ? { background: "#f1f1f1", color: "#888" } : {}}
+              />
+            </div>
             {!usuarioEditar && (
               <>
-                <InputEstilizado
-                  type="password"
-                  name="password"
-                  placeholder="Contraseña"
-                  value={password}
-                  onChange={handleChange}
-                  required
-                />
-                <InputEstilizado
-                  type="password"
-                  name="password2"
-                  placeholder="Repetir Contraseña"
-                  value={password2}
-                  onChange={handleChange}
-                  required
-                />
+                <div>
+                  <label>Contraseña</label>
+                  <InputEstilizado
+                    type="password"
+                    name="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label>Repetir Contraseña</label>
+                  <InputEstilizado
+                    type="password"
+                    name="password2"
+                    placeholder="Repita la contraseña"
+                    value={password2}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
               </>
             )}
           </ContenedorInputsDosColumnas>
