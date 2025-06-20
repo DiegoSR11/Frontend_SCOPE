@@ -177,6 +177,12 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
       return setEstadoAlerta(true);
     }
 
+    // Validación fecha fin no puede ser anterior a inicio
+    if (fechaVencimiento < fechaInicio) {
+      setAlerta({ tipo: 'error', mensaje: 'La fecha de vencimiento no puede ser anterior a la fecha de inicio.' });
+      return setEstadoAlerta(true);
+    }
+
     // Validación de antecesora y predecesora
     const currentId = esEdicion ? idTarea : null;
 
