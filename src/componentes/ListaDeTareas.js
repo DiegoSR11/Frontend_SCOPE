@@ -1,5 +1,5 @@
-// Archivo: ListaDeTareas.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import styled from "styled-components";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./../firebase/firebaseConfig";
 import useObtenerTareas from "./../hooks/useObtenerTareas";
@@ -13,67 +13,46 @@ import {
   BotonCargarMas,
   ContenedorBotonCentral,
   ContenedorSubtitulo,
-  Subtitulo,
-  ContenedorProyectosPorFecha as ContenedorTareasPorFecha
+  Subtitulo
 } from "./../elementos/ElementosDeLista";
 import { format, fromUnixTime } from "date-fns";
 import { es } from "date-fns/locale";
 import { ReactComponent as IconoEditar } from "./../imagenes/editar.svg";
 import { ReactComponent as IconoVer } from "./../imagenes/view.svg";
 import { ReactComponent as IconoBorrar } from "./../imagenes/borrar.svg";
-import styled from "styled-components";
 import borrarTarea from "./../firebase/borrarTarea";
 import { Link } from "react-router-dom";
 import DiagramaGantt from "./DiagramaGantt";
 
-// Estilos atractivos para filtros y selects
-const StyledSelect = styled.select`
-  appearance: none;
-  border: none;
+// ========== ESTILOS (puedes mantenerlos como en tu código)
+const ModernInput = styled.input`
+  border: 2px solid #b9e5ff;
   outline: none;
-  background: #e3edf7;
+  background: #fff;
   color: #222;
-  border-radius: 999px;
+  border-radius: 16px;
   font-size: 1rem;
-  padding: 0.6rem 1.6rem 0.6rem 0.9rem;
-  font-weight: 600;
-  margin-top: 0.25rem;
-  box-shadow: 0 2px 10px 0 #e3edf780;
-  transition: background 0.15s, box-shadow 0.15s;
-  cursor: pointer;
-  &:hover, &:focus {
-    background: #cde7fd;
-    box-shadow: 0 4px 18px 0 #a1c4fd80;
-  }
-`;
-
-const StyledInput = styled.input`
-  border: none;
-  outline: none;
-  background: #e3edf7;
-  color: #222;
-  border-radius: 999px;
-  font-size: 1rem;
-  padding: 0.6rem 1.2rem;
+  padding: 0.68rem 1.2rem;
   font-weight: 500;
   margin-top: 0.25rem;
   box-shadow: 0 2px 10px 0 #e3edf780;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: border 0.18s, box-shadow 0.18s;
   &:focus, &:hover {
-    background: #cde7fd;
-    box-shadow: 0 4px 18px 0 #a1c4fd80;
+    border: 2.5px solid #42a5f5;
+    background: #e7f6ff;
+    box-shadow: 0 4px 18px 0 #b9e5ff70;
   }
 `;
 
 const FiltrosContainer = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: #f7fafc;
+  gap: 1.4rem;
+  margin-bottom: 1rem;
+  padding: 1.0rem 1.0rem;
+  background: #f5fbff;
   border-radius: 1.5rem;
-  box-shadow: 0 2px 16px 0 #a1c4fd22;
+  box-shadow: 0 2px 16px 0 #b9e5ff20;
   align-items: flex-end;
 `;
 
@@ -82,7 +61,8 @@ const FiltroLabel = styled.label`
   flex-direction: column;
   font-weight: 600;
   color: #37474f;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  gap: 0.2rem;
 `;
 
 const Responsable = styled.div`
@@ -94,6 +74,53 @@ const Responsable = styled.div`
   margin-top: 0.3rem;
   display: inline-block;
   margin-right: 0.5rem;
+`;
+
+const TaskGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2.3rem 1.3rem;
+  width: 100%;
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 650px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TaskCardWrapper = styled.div`
+  min-width: 0;
+  width: 100%;
+  margin-bottom: 0.2rem;
+`;
+
+const FechaCard = styled(Fecha)`
+  margin-bottom: 0.6rem;
+  margin-top: 0.2rem;
+  font-size: 1.01rem;
+`;
+
+const coloresEstado = {
+  "Pendiente": "#FFA500",
+  "En desarrollo": "#2196f3",
+  "Completado": "#4caf50",
+  "Quebrado": "#f44336"
+};
+
+const Estado = styled.span`
+  font-weight: bold;
+  background-color: ${({ color }) => color || "transparent"};
+  color: white;
+  padding: 0.22rem 0.6rem;
+  border-radius: 0.7rem;
+  display: inline-block;
+  min-width: 90px;
+  text-align: center;
 `;
 
 const VentanaConfirmacion = styled.div`
@@ -134,24 +161,6 @@ const Etiqueta = styled.div`
 const Contenido = styled.div`
   color: #455a64;
   font-size: 0.95rem;
-`;
-
-const coloresEstado = {
-  "Pendiente": "#FFA500",
-  "En desarrollo": "#2196f3",
-  "Completado": "#4caf50",
-  "Quebrado": "#f44336"
-};
-
-const Estado = styled.span`
-  font-weight: bold;
-  background-color: ${({ color }) => color || "transparent"};
-  color: white;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.5rem;
-  display: inline-block;
-  min-width: 90px;
-  text-align: center;
 `;
 
 const IconoAdvertencia = styled.span`
@@ -209,6 +218,127 @@ const BotonesConfirmacion = styled.div`
   flex-wrap: wrap;
 `;
 
+// ========== Dropdown custom igual al anterior
+const DropdownContainer = styled.div`
+  position: relative;
+  min-width: 270px;
+  user-select: none;
+`;
+
+const Selected = styled.div`
+  padding: 0.5rem 1.0rem;
+  background: #fff;
+  border: 2px solid #b9e5ff;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 10px 0 #e3edf7a3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  &:hover, &:focus {
+    border: 2.5px solid #42a5f5;
+    background: #e7f6ff;
+  }
+`;
+
+const OptionsList = styled.ul`
+  position: absolute;
+  width: 100%;
+  margin: 0;
+  top: 110%;
+  left: 0;
+  background: #fff;
+  border-radius: 16px;
+  border: 2px solid #b9e5ff;
+  box-shadow: 0 8px 32px #8ad7ff3a;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+  padding: 0.3rem 0;
+  list-style: none;
+`;
+
+const Option = styled.li`
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  background: ${({ active, selected }) =>
+    selected ? "#16b1ff"
+    : active ? "#e3edf7"
+    : "#fff"};
+  color: ${({ selected }) => selected ? "#fff" : "#212121"};
+  font-weight: ${({ selected }) => selected ? 700 : 500};
+  border-radius: 10px;
+  margin: 0.12rem 0.4rem;
+  transition: background 0.16s;
+  &:hover, &:focus {
+    background: ${({ selected }) => selected ? "#16b1ff" : "#e3edf7"};
+    color: ${({ selected }) => selected ? "#fff" : "#222"};
+  }
+`;
+
+const Icon = styled.span`
+  margin-left: 0.6rem;
+  font-size: 1.2rem;
+  color: #88bbdf;
+  pointer-events: none;
+`;
+
+function SingleSelectDropdown({
+  options,
+  value,
+  setValue,
+  placeholder = "Selecciona...",
+  labelKey = "label",
+  valueKey = "value"
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const ref = useRef();
+
+  useEffect(() => {
+    const handleClick = e => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    if (open) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const selectedOption = options.find(opt => opt[valueKey] === value);
+
+  return (
+    <DropdownContainer ref={ref} tabIndex={0}>
+      <Selected
+        onClick={() => setOpen(o => !o)}
+        tabIndex={0}
+        onBlur={() => setTimeout(() => setOpen(false), 100)}
+      >
+        {selectedOption ? selectedOption[labelKey] : placeholder}
+        <Icon>▼</Icon>
+      </Selected>
+      {open && (
+        <OptionsList>
+          {options.map((opt, idx) => (
+            <Option
+              key={opt[valueKey] ?? idx}
+              selected={value === opt[valueKey]}
+              active={idx === activeIndex}
+              onClick={() => { setValue(opt[valueKey]); setOpen(false); }}
+              onMouseEnter={() => setActiveIndex(idx)}
+            >
+              {opt[labelKey]}
+            </Option>
+          ))}
+        </OptionsList>
+      )}
+    </DropdownContainer>
+  );
+}
+
+// ========== COMPONENTE PRINCIPAL ==========
+
 const ListaDeTareas = ({ id }) => {
   const [tareas, setTareas, obtenerMasTareas, hayMasPorCargar] = useObtenerTareas(id);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
@@ -261,14 +391,34 @@ const ListaDeTareas = ({ id }) => {
   const formatearFecha = fecha =>
     format(fromUnixTime(fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
 
+  // FILTRADO UNIFICADO
   const tareasFiltradas = tareas.filter(t => {
-    if (filterType === 'Todos') return true;
-    if (filterType === 'Mes') {
-      if (!filterMes || !filterAnio) return true;
+if (filterType === 'Mes') {
       const date = new Date(t.fechaCreado * 1000);
-      return date.getFullYear() === parseInt(filterAnio, 10)
-          && date.getMonth() + 1 === parseInt(filterMes, 10);
+      // Si seleccionaste solo mes
+      if (filterMes && !filterAnio) {
+        return date.getMonth() + 1 === parseInt(filterMes, 10);
+      }
+      // Si seleccionaste solo año
+      if (!filterMes && filterAnio) {
+        return date.getFullYear() === parseInt(filterAnio, 10);
+      }
+      // Si ambos, filtra por ambos
+      if (filterMes && filterAnio) {
+        return (
+          date.getFullYear() === parseInt(filterAnio, 10) &&
+          date.getMonth() + 1 === parseInt(filterMes, 10)
+        );
+      }
+      // Si nada, muestra todas
+      if (!filterMes && !filterAnio) return true;
     }
+    if (filterType === 'Todos') return true;
+    if (filterType === 'Día') {
+      if (!filterValue) return true;
+      return format(fromUnixTime(t.fechaCreado), 'yyyy-MM-dd') === filterValue;
+    }
+    if (filterType === 'Todos') return true;
     if (filterType === 'Día') {
       if (!filterValue) return true;
       return format(fromUnixTime(t.fechaCreado), 'yyyy-MM-dd') === filterValue;
@@ -281,15 +431,8 @@ const ListaDeTareas = ({ id }) => {
     return true;
   });
 
-  const tareasAgrupadas = tareasFiltradas.reduce((acc, t) => {
-    const fecha = formatearFecha(t.fechaCreado);
-    if (!acc[fecha]) acc[fecha] = [];
-    acc[fecha].push(t);
-    return acc;
-  }, {});
-
-  const fechasOrdenadas = Object.keys(tareasAgrupadas)
-    .sort((a, b) => new Date(b) - new Date(a));
+  // ORDENAR tareas por fechaCreado descendente
+  const tareasFiltradasOrdenadas = [...tareasFiltradas].sort((a, b) => b.fechaCreado - a.fechaCreado);
 
   const confirmarEliminacion = tarea => {
     setTareaAEliminar(tarea);
@@ -314,100 +457,92 @@ const ListaDeTareas = ({ id }) => {
       <FiltrosContainer>
         <FiltroLabel>
           Filtrar por
-          <StyledSelect
+          <SingleSelectDropdown
+            options={[
+              { value: "Todos", label: "Todos" },
+              { value: "Mes", label: "Mes" },
+              { value: "Día", label: "Día" },
+              { value: "Estado", label: "Estado" },
+              { value: "Responsable", label: "Responsable" },
+              { value: "Gantt", label: "Diagrama de Gantt" }
+            ]}
             value={filterType}
-            onChange={e => {
-              setFilterType(e.target.value);
+            setValue={val => {
+              setFilterType(val);
               setFilterValue('');
               setFilterMes('');
               setFilterAnio('');
             }}
-          >
-            <option value="Todos">Todos</option>
-            <option value="Mes">Mes</option>
-            <option value="Día">Día</option>
-            <option value="Estado">Estado</option>
-            <option value="Responsable">Responsable</option>
-            <option value="Gantt">Diagrama de Gantt</option>
-          </StyledSelect>
+            placeholder="Filtrar por"
+          />
         </FiltroLabel>
-
         {filterType === "Mes" && (
           <>
             <FiltroLabel>
               Mes
-              <StyledSelect
+              <SingleSelectDropdown
+                options={[
+                  { value: "", label: "Todos" },
+                  ...meses
+                ]}
                 value={filterMes}
-                onChange={e => setFilterMes(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {meses.map(m => (
-                  <option key={m.value} value={m.value}>
-                    {m.label}
-                  </option>
-                ))}
-              </StyledSelect>
+                setValue={setFilterMes}
+                placeholder="Mes"
+              />
             </FiltroLabel>
-
             <FiltroLabel>
               Año
-              <StyledSelect
+              <SingleSelectDropdown
+                options={[
+                  { value: "", label: "Todos" },
+                  ...anios.map(a => ({ value: a, label: a }))
+                ]}
                 value={filterAnio}
-                onChange={e => setFilterAnio(e.target.value)}
-              >
-                <option value="">Todos</option>
-                {anios.map(a => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </StyledSelect>
+                setValue={setFilterAnio}
+                placeholder="Año"
+              />
             </FiltroLabel>
           </>
         )}
-
         {filterType === "Día" && (
           <FiltroLabel>
             Fecha Inicio
-            <StyledInput
+            <ModernInput
               type="date"
               value={filterValue}
               onChange={e => setFilterValue(e.target.value)}
             />
           </FiltroLabel>
         )}
-
         {filterType === "Estado" && (
           <FiltroLabel>
             Estado
-            <StyledSelect
+            <SingleSelectDropdown
+              options={[
+                { value: "", label: "Todos" },
+                ...Object.keys(coloresEstado).map(e => ({ value: e, label: e }))
+              ]}
               value={filterValue}
-              onChange={e => setFilterValue(e.target.value)}
-            >
-              <option value="">Todos</option>
-              {Object.keys(coloresEstado).map(estado => (
-                <option key={estado} value={estado}>
-                  {estado}
-                </option>
-              ))}
-            </StyledSelect>
+              setValue={setFilterValue}
+              placeholder="Estado"
+            />
           </FiltroLabel>
         )}
-
         {filterType === "Responsable" && (
           <FiltroLabel>
             Responsable
-            <StyledSelect
+            <SingleSelectDropdown
+              options={[
+                { value: "", label: "Todos" },
+                ...Object.entries(mapaUsuarios).map(([uid, name]) => ({
+                  value: uid,
+                  label: name
+                }))
+              ]}
               value={filterValue}
-              onChange={e => setFilterValue(e.target.value)}
-            >
-              <option value="">Todos</option>
-              {Object.entries(mapaUsuarios).map(([uid, name]) => (
-                <option key={uid} value={uid}>
-                  {name}
-                </option>
-              ))}
-            </StyledSelect>
+              setValue={setFilterValue}
+              placeholder="Responsable"
+            />
           </FiltroLabel>
         )}
       </FiltrosContainer>
@@ -415,16 +550,16 @@ const ListaDeTareas = ({ id }) => {
       {/* Mostrar lista o gantt según filtro */}
       {filterType === "Gantt" ? (
         <div style={{ marginTop: "2rem" }}>
-          <DiagramaGantt tareas={tareasFiltradas} />
+          <DiagramaGantt tareas={tareasFiltradasOrdenadas} />
         </div>
       ) : (
         <Lista>
-          {fechasOrdenadas.map(fecha => (
-            <div key={fecha}>
-              <Fecha>{fecha}</Fecha>
-              <ContenedorTareasPorFecha>
-                {tareasAgrupadas[fecha].map(tarea => (
-                  <ElementoLista key={tarea.id}>
+          {tareasFiltradasOrdenadas.length ? (
+            <TaskGrid>
+              {tareasFiltradasOrdenadas.map(tarea => (
+                <TaskCardWrapper key={tarea.id}>
+                  <FechaCard>{formatearFecha(tarea.fechaCreado)}</FechaCard>
+                  <ElementoLista>
                     <Descripcion>
                       <strong>{tarea.nombreTarea}</strong>
                     </Descripcion>
@@ -471,17 +606,14 @@ const ListaDeTareas = ({ id }) => {
                       </BotonAccion>
                     </ContenedorBotones>
                   </ElementoLista>
-                ))}
-              </ContenedorTareasPorFecha>
-            </div>
-          ))}
-
-          {!tareasFiltradas.length && (
+                </TaskCardWrapper>
+              ))}
+            </TaskGrid>
+          ) : (
             <ContenedorSubtitulo>
               <Subtitulo>No hay tareas que coincidan con el filtro</Subtitulo>
             </ContenedorSubtitulo>
           )}
-
           {hayMasPorCargar && (
             <ContenedorBotonCentral>
               <BotonCargarMas onClick={obtenerMasTareas}>
@@ -492,7 +624,8 @@ const ListaDeTareas = ({ id }) => {
         </Lista>
       )}
 
-            {mostrarConfirmacion && (
+      {/* Modal de confirmación */}
+      {mostrarConfirmacion && (
         <VentanaConfirmacion>
           <ContenedorConfirmacion>
             <IconoAdvertencia>

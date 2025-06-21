@@ -7,7 +7,7 @@ import styled from 'styled-components';
 import { Helmet } from 'react-helmet';
 import grupo from './../imagenes/grupo.png';
 import logo from './../imagenes/logo-celeste.png';
-import { Header, ContenedorBotones, ContenedorLogo, LogoImg } from './../elementos/Header';
+import { Header, ContenedorBotones, ContenedorLogo } from './../elementos/Header';
 import BotonCerrarSesion from './../elementos/BotonCerrarSesion';
 import Alerta from '../elementos/Alerta';
 import { Mail, Phone, Building2, Briefcase, Globe, MapPin, Pencil } from 'lucide-react';

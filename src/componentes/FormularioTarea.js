@@ -13,7 +13,6 @@ import Alerta from './../elementos/Alerta';
 import MultiSelectDropdown from "./../elementos/MultiSelectDropdown";
 import { Header, Titulo, ContenedorHeader } from './../elementos/Header';
 import DatePicker from './DatePicker';
-import { ReactComponent as IconoPlus } from './../imagenes/plus.svg';
 import SelectEstado from './SelectEstado';
 import useObtenerProyecto from '../hooks/useObtenerProyecto';
 import useObtenerTareas from "./../hooks/useObtenerTareas";
