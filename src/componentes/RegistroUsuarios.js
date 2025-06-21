@@ -72,6 +72,10 @@ const BotonCancelar = styled.button`
 // Solo letras y espacios
 const soloLetras = texto => /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/.test(texto);
 
+// Valida contraseña segura: mínimo 6 caracteres, una mayúscula, un número y un signo
+const passwordFuerte = password =>
+  /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[{};':"\\|,.<>/?`~]).{8,}$/.test(password);
+
 const RegistroUsuarios = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -232,8 +236,12 @@ const RegistroUsuarios = () => {
       if (!emailRegex.test(correo)) {
         return { tipo: 'error', mensaje: 'Por favor ingresa un correo válido.' };
       }
-      if (password.length < 6) {
-        return { tipo: 'error', mensaje: 'La contraseña debe tener al menos 6 caracteres.' };
+      // Cambiado: validación de contraseña fuerte
+      if (password.length < 8) {
+        return { tipo: 'error', mensaje: 'La contraseña debe tener al menos 8 caracteres.' };
+      }
+      if (!passwordFuerte(password)) {
+        return { tipo: 'error', mensaje: 'La contraseña debe tener al menos una letra mayúscula, un número y un signo especial.' };
       }
       if (password !== password2) {
         return { tipo: 'error', mensaje: 'Las contraseñas no son iguales.' };
@@ -453,7 +461,7 @@ const RegistroUsuarios = () => {
                   <InputEstilizado
                     type="password"
                     name="password"
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mínimo 6 caracteres, 1 mayúscula, 1 número y 1 signo"
                     value={password}
                     onChange={handleChange}
                     required

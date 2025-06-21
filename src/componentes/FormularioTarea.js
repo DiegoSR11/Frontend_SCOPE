@@ -96,6 +96,10 @@ const Select = styled.select`
   font-family: 'Work Sans', sans-serif;
 `;
 
+// Métodos de validación por campo
+const validarNombreTarea = (valor) => valor && valor.trim() !== '';
+const validarDescripcionTarea = (valor) => valor && valor.trim() !== '';
+const validarResponsables = (valor) => Array.isArray(valor) && valor.length > 0;
 
 const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
   const params = useParams();
@@ -167,13 +171,20 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
   const handleSubmit = async e => {
     e.preventDefault();
 
-    // validaciones básicas
-    if (!nombreTarea.trim() || !descripcionTarea.trim()) {
-      setAlerta({ tipo: 'error', mensaje: 'Nombre y descripción obligatorios.' });
+    // Validación por campo (individual)
+    const faltantes = [];
+    if (!validarNombreTarea(nombreTarea)) faltantes.push('nombre de la tarea');
+    if (!validarDescripcionTarea(descripcionTarea)) faltantes.push('descripción');
+    if (!validarResponsables(responsables)) faltantes.push('responsable(s)');
+
+    // Mensaje para 1 solo faltante
+    if (faltantes.length === 1) {
+      setAlerta({ tipo: 'error', mensaje: `Debe completar el campo: ${faltantes[0]}.` });
       return setEstadoAlerta(true);
     }
-    if (responsables.length === 0) {
-      setAlerta({ tipo: 'error', mensaje: 'Selecciona al menos un responsable.' });
+    // Mensaje para varios faltantes
+    if (faltantes.length > 1) {
+      setAlerta({ tipo: 'error', mensaje: `Debe completar los siguientes campos: ${faltantes.join(', ')}.` });
       return setEstadoAlerta(true);
     }
 
@@ -185,13 +196,10 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
 
     // Validación de antecesora y predecesora
     const currentId = esEdicion ? idTarea : null;
-
-    // 1. No pueden ser la misma entre sí (pero pueden estar ambos vacíos)
     if (antecesora && predecesora && antecesora === predecesora) {
       setAlerta({ tipo: 'error', mensaje: 'La tarea antecesora y la predecesora no pueden ser la misma.' });
       return setEstadoAlerta(true);
     }
-    // 2. No pueden referirse a sí misma (solo aplica en edición porque en creación no hay id aún)
     if (currentId) {
       if (antecesora && antecesora === currentId) {
         setAlerta({ tipo: 'error', mensaje: 'La tarea no puede ser antecesora de sí misma.' });
