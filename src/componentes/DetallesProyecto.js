@@ -6,7 +6,8 @@ import editarProyecto from "./../firebase/editarProyecto";
 import { db } from "./../firebase/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 import ListaUsuariosModal from "./ListaUsuariosModal";
-import Alerta from "./../elementos/Alerta";  // <-- Importar Alerta
+import Alerta from "./../elementos/Alerta";
+import { useAuth } from "../contextos/AuthContext";
 
 // Estilos principales
 const ContenedorCentral = styled.div`
@@ -46,7 +47,6 @@ const Tarjeta = styled.div`
   padding: 1rem 1.25rem;
   transition: transform 0.2s;
   border-left: 5px solid ${({ color }) => color || "#4f46e5"};
-
   &:hover {
     transform: translateY(-3px);
   }
@@ -164,10 +164,47 @@ const Spinner = styled.div`
   vertical-align: middle;
 `;
 
+const ModalConfirmacion = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+`;
+
+const ModalContenido = styled.div`
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+`;
+
+const BotonModal = styled.button`
+  margin: 0 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fff;
+  background: ${({ $secundario }) => ($secundario ? "#bdbdbd" : "#dc2626")};
+  cursor: pointer;
+  &:hover { background: ${({ $secundario }) => ($secundario ? "#9e9e9e" : "#b91c1c")}; }
+`;
+
 const formatearFecha = (fecha) =>
   format(fromUnixTime(fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
 
 const DetallesProyecto = ({ proyecto, idProyecto }) => {
+  const { usuario } = useAuth();
+
   const [gestoresUids, setGestoresUids] = useState(proyecto.gestores || []);
   const [gestores, setGestores] = useState([]);
   const [creador, setCreador] = useState(null);
@@ -175,9 +212,16 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
   const [mostrarModalUsuarios, setMostrarModalUsuarios] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Estados para la alerta de validación de UID
   const [estadoAlertaUid, setEstadoAlertaUid] = useState(false);
   const [alertaUid, setAlertaUid] = useState({});
+
+  // Estado para modal de confirmación
+  const [modalEliminar, setModalEliminar] = useState({
+    abierto: false,
+    uid: null,
+    nombre: '',
+    esAutoEliminacion: false // true si es autoeliminación, false si lo elimina el creador
+  });
 
   // Sincronizar UIDs al cambiar proyecto
   useEffect(() => {
@@ -206,6 +250,8 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
     cargar();
   }, [gestoresUids, proyecto.creadoPor]);
 
+  const esCreador = usuario && creador && usuario.uid === creador.uid;
+
   const actualizarGestores = async (newUids) => {
     setLoading(true);
     const prev = [...gestoresUids];
@@ -222,6 +268,7 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
 
   // Validación de UID antes de agregar desde input
   const handleAgregarUsuario = async () => {
+    if (!esCreador) return;
     const uid = usuarioNuevo.trim();
     if (!uid || gestoresUids.includes(uid)) return;
 
@@ -260,6 +307,7 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
 
   // Validación y alerta al agregar desde modal
   const handleAgregarDesdeModal = (seleccionados) => {
+    if (!esCreador) return;
     const uidsNuevos = seleccionados
       .map((u) => u.uid)
       .filter((uid) => !gestoresUids.includes(uid));
@@ -272,13 +320,40 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
         mensaje: `Se agregaron ${uidsNuevos.length} usuario(s) correctamente.`
       });
     }
-
     setMostrarModalUsuarios(false);
   };
 
-  const handleEliminarUsuario = (uid) => {
-    if (creador?.uid === uid) return;
-    actualizarGestores(gestoresUids.filter((x) => x !== uid));
+  // Apertura de modal para eliminar
+  const abrirModalEliminar = (uid, nombre, esAutoEliminacion = false) => {
+    setModalEliminar({
+      abierto: true,
+      uid,
+      nombre,
+      esAutoEliminacion
+    });
+  };
+
+  // Confirmar eliminación (tanto creador a gestor, como autoeliminación)
+  const confirmarEliminar = async () => {
+    if (!modalEliminar.uid) return;
+    await actualizarGestores(gestoresUids.filter((x) => x !== modalEliminar.uid));
+    setModalEliminar({
+      abierto: false,
+      uid: null,
+      nombre: '',
+      esAutoEliminacion: false
+    });
+    // Si es autoeliminación, puedes redirigir o cerrar la vista si quieres
+    // window.location.href = "/inicio";
+  };
+
+  const cancelarEliminar = () => {
+    setModalEliminar({
+      abierto: false,
+      uid: null,
+      nombre: '',
+      esAutoEliminacion: false
+    });
   };
 
   return (
@@ -323,37 +398,57 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
       <SeccionDerecha>
         <h3>Gestores Asignados</h3>
         {gestores.map((g) => {
-          const esCreador = creador?.uid === g.uid;
+          const esCreadorGestor = creador?.uid === g.uid;
+          const esUsuarioActual = usuario?.uid === g.uid;
+
           return (
             <TarjetaGestor key={g.uid}>
               <NombreGestor>
-                {g.nombre}{esCreador && <EtiquetaCreador>Creador</EtiquetaCreador>}
+                {g.nombre}{esCreadorGestor && <EtiquetaCreador>Creador</EtiquetaCreador>}
               </NombreGestor>
               <InfoGestor><strong>Correo:</strong> {g.correo}</InfoGestor>
               <InfoGestor><strong>Área:</strong> {g.area}</InfoGestor>
-              {!esCreador && (
-                <BotonEliminar disabled={loading} onClick={() => handleEliminarUsuario(g.uid)}>
+              {/* Solo el creador puede eliminar y nunca a sí mismo */}
+              {!esCreadorGestor && esCreador && (
+                <BotonEliminar
+                  disabled={loading}
+                  onClick={() => abrirModalEliminar(g.uid, g.nombre, false)}
+                >
                   {loading ? <Spinner /> : 'Eliminar'}
+                </BotonEliminar>
+              )}
+              {/* Si soy gestor (no creador) veo mi propio botón para autoeliminarme */}
+              {!esCreadorGestor && esUsuarioActual && !esCreador && (
+                <BotonEliminar
+                  disabled={loading}
+                  onClick={() => abrirModalEliminar(g.uid, g.nombre, true)}
+                >
+                  {loading ? <Spinner /> : 'Eliminarme'}
                 </BotonEliminar>
               )}
             </TarjetaGestor>
           );
         })}
 
-        <BotonAbrirListaUsuarios onClick={() => setMostrarModalUsuarios(true)} disabled={loading}>
-          Lista de Usuarios con Grupos común
-        </BotonAbrirListaUsuarios>
+        {/* Solo el creador puede agregar gestores */}
+        {esCreador && (
+          <>
+            <BotonAbrirListaUsuarios onClick={() => setMostrarModalUsuarios(true)} disabled={loading}>
+              Lista de Usuarios con Grupos común
+            </BotonAbrirListaUsuarios>
 
-        <Input
-          type="text"
-          value={usuarioNuevo}
-          onChange={(e) => setUsuarioNuevo(e.target.value)}
-          placeholder="UID del nuevo gestor"
-          disabled={loading}
-        />
-        <BotonAgregar disabled={loading} onClick={handleAgregarUsuario}>
-          {loading ? <Spinner /> : 'Agregar Gestor'}
-        </BotonAgregar>
+            <Input
+              type="text"
+              value={usuarioNuevo}
+              onChange={(e) => setUsuarioNuevo(e.target.value)}
+              placeholder="UID del nuevo gestor"
+              disabled={loading}
+            />
+            <BotonAgregar disabled={loading} onClick={handleAgregarUsuario}>
+              {loading ? <Spinner /> : 'Agregar Gestor'}
+            </BotonAgregar>
+          </>
+        )}
 
         <Alerta
           tipo={alertaUid.tipo}
@@ -363,7 +458,29 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
         />
       </SeccionDerecha>
 
-      {mostrarModalUsuarios && (
+      {/* Modal de confirmación para eliminar gestor (por creador o autoeliminación) */}
+      {modalEliminar.abierto && (
+        <ModalConfirmacion role="dialog" aria-modal="true">
+          <ModalContenido>
+            <p>
+              {modalEliminar.esAutoEliminacion
+                ? '¿Seguro que deseas salir del proyecto?'
+                : `¿Seguro que deseas eliminar a ${modalEliminar.nombre} del proyecto?`}
+            </p>
+            <div style={{ marginTop: "1rem" }}>
+              <BotonModal onClick={confirmarEliminar}>
+                Sí, eliminar
+              </BotonModal>
+              <BotonModal $secundario onClick={cancelarEliminar}>
+                Cancelar
+              </BotonModal>
+            </div>
+          </ModalContenido>
+        </ModalConfirmacion>
+      )}
+
+      {/* Solo el creador puede abrir el modal de agregar usuarios */}
+      {mostrarModalUsuarios && esCreador && (
         <ListaUsuariosModal
           existingUids={gestoresUids}
           closeModal={handleAgregarDesdeModal}

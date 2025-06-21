@@ -18,7 +18,7 @@ import { es } from "date-fns/locale";
 import { ReactComponent as IconoEditar } from "./../imagenes/editar.svg";
 import { ReactComponent as IconoVer } from "./../imagenes/view.svg";
 import { ReactComponent as IconoBorrar } from "./../imagenes/borrar.svg";
-import styled, { css } from "styled-components";
+import styled from "styled-components";
 import borrarRiesgo from "./../firebase/borrarRiesgo";
 import { Link } from "react-router-dom";
 
@@ -40,14 +40,7 @@ const FilterButton = styled.button`
   font-size: 0.97rem;
   box-shadow: 0 2px 8px #cbd5e150;
   letter-spacing: 0.03em;
-  ${(props) =>
-    props.active &&
-    css`
-      background: linear-gradient(90deg, #2563eb 70%, #ff9800 100%);
-      color: #fff;
-      box-shadow: 0 4px 16px #2563eb33;
-      transform: scale(1.04);
-    `}
+
   &:hover, &:focus {
     background: #bae6fd;
     color: #1e293b;
@@ -333,7 +326,7 @@ const ListaDeRiesgos = ({ id }) => {
 
         {filterType === "Día" && (
           <label>
-            Fecha Inicio
+            
             <StyledInput
               type="date"
               value={filterValue}
@@ -344,7 +337,7 @@ const ListaDeRiesgos = ({ id }) => {
 
         {filterType === "Probabilidad" && (
           <label>
-            Probabilidad
+            
             <StyledSelect
               value={filterValue}
               onChange={e => setFilterValue(e.target.value)}
@@ -359,7 +352,7 @@ const ListaDeRiesgos = ({ id }) => {
 
         {filterType === "Impacto" && (
           <label>
-            Impacto
+            
             <StyledSelect
               value={filterValue}
               onChange={e => setFilterValue(e.target.value)}

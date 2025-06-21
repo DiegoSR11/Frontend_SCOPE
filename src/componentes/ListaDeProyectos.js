@@ -50,6 +50,7 @@ const BotonRegistrar = styled(Link)`
 const ListaDeProyectos = () => {
   const { usuario } = useAuth();
   const [proyectos, obtenerMasProyectos, hayMasPorCargar] = useObtenerProyectos();
+  const [proyectosVista, setProyectosVista] = useState([]);
   const [totalProyectos, setTotalProyectos] = useState(0);
 
   // Modal para confirmar eliminación
@@ -62,13 +63,18 @@ const ListaDeProyectos = () => {
   // Mapa UID -> Nombre completo del creador
   const [mapaCreadores, setMapaCreadores] = useState({});
 
+  // Para mantener sincronizada la lista local
+  useEffect(() => {
+    setProyectosVista(proyectos);
+  }, [proyectos]);
+
   // Función para formatear fecha unix timestamp
   const formatearFecha = (fecha) => {
     return format(fromUnixTime(fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
   };
 
   // Agrupar proyectos por fecha formateada (fechaCreado)
-  const proyectosAgrupados = proyectos.reduce((acc, proyecto) => {
+  const proyectosAgrupados = proyectosVista.reduce((acc, proyecto) => {
     const fechaFormateada = formatearFecha(proyecto.fechaCreado);
     if (!acc[fechaFormateada]) {
       acc[fechaFormateada] = [];
@@ -79,12 +85,8 @@ const ListaDeProyectos = () => {
 
   // Ordenar las fechas descendente
   const fechasOrdenadas = Object.keys(proyectosAgrupados).sort((a, b) => {
-    // Convertir fecha string a objeto Date para comparación
-    // Aquí asumo formato "dd de MMMM de yyyy"
     const parseFecha = (fechaStr) => {
-      // Para evitar error simple, parseo con date-fns
       const partes = fechaStr.split(" de ");
-      // partes: [dd, MMMM, yyyy]
       const dia = parseInt(partes[0], 10);
       const mes = {
         enero: 0, febrero: 1, marzo: 2, abril: 3,
@@ -94,12 +96,10 @@ const ListaDeProyectos = () => {
       const anio = parseInt(partes[2], 10);
       return new Date(anio, mes, dia);
     };
-
     return parseFecha(b) - parseFecha(a);
   });
 
   useEffect(() => {
-    // Contar proyectos asignados al usuario actual
     const contarProyectos = async () => {
       if (!usuario) return;
       try {
@@ -120,14 +120,10 @@ const ListaDeProyectos = () => {
   useEffect(() => {
     const obtenerNombresCreadores = async () => {
       const nuevosMapas = { ...mapaCreadores };
-      // Extraer UIDs creadosPor de proyectos que no tenemos en el mapa
-      const uidsFaltantes = proyectos
+      const uidsFaltantes = proyectosVista
         .map(p => p.creadoPor)
         .filter(uid => uid && !nuevosMapas[uid]);
-
-      // Quitar duplicados
       const uidsUnicos = [...new Set(uidsFaltantes)];
-
       await Promise.all(
         uidsUnicos.map(async (uid) => {
           try {
@@ -147,12 +143,11 @@ const ListaDeProyectos = () => {
       );
       setMapaCreadores(nuevosMapas);
     };
-
-    if (proyectos.length > 0) {
+    if (proyectosVista.length > 0) {
       obtenerNombresCreadores();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proyectos]);
+  }, [proyectosVista]);
 
   // Funciones para abrir y cerrar modal
   const abrirModalEliminar = (id, nombre) => {
@@ -165,6 +160,8 @@ const ListaDeProyectos = () => {
   const confirmarEliminar = async () => {
     if (modalEliminar.proyectoId) {
       await borrarProyecto(modalEliminar.proyectoId);
+      setProyectosVista(prev => prev.filter(p => p.id !== modalEliminar.proyectoId));
+      setTotalProyectos(prev => Math.max(0, prev - 1)); // actualiza el total
       setModalEliminar({ abierto: false, proyectoId: null, proyectoNombre: '' });
     }
   };
@@ -236,7 +233,7 @@ const ListaDeProyectos = () => {
           </div>
         ))}
 
-        {proyectos.length === 0 && (
+        {proyectosVista.length === 0 && (
           <ContenedorSubtitulo>
             <Subtitulo>No hay proyectos por mostrar</Subtitulo>
             <Boton as={Link} to="/formulario">

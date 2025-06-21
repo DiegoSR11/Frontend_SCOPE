@@ -1,4 +1,3 @@
-// Archivo: VerProyecto.jsx
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
@@ -18,6 +17,7 @@ import ChatBotIA from "../componentes/ChatBotProyecto";
 import useObtenerProyecto from "./../hooks/useObtenerProyecto";
 import useObtenerTareas from "../hooks/useObtenerTareas";
 import useObtenerRiesgos from "../hooks/useObtenerRiesgos";
+import { useAuth } from "../contextos/AuthContext"; // <--- AGREGA ESTA IMPORTACIÓN
 
 import logo from './../imagenes/logo-celeste.png';
 
@@ -55,7 +55,18 @@ const Tab = styled.button`
   }
 `;
 
-// Agrupa acciones del header
+const MensajeError = styled.div`
+  background: #fff8e1;
+  border: 1px solid #ff9800;
+  color: #ff9800;
+  padding: 2rem;
+  margin: 2rem auto;
+  text-align: center;
+  border-radius: 1rem;
+  font-size: 1.2rem;
+  max-width: 500px;
+`;
+
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
@@ -68,8 +79,43 @@ const VerProyecto = () => {
   const [tareas] = useObtenerTareas(id);
   const [riesgos] = useObtenerRiesgos(id);
   const [pestaña, setPestaña] = useState("detalles");
+  const { usuario } = useAuth();
 
+  // Si no carga el proyecto
   if (!proyecto) return <Cargando />;
+
+  // Verifica acceso del usuario actual
+  const puedeVer = usuario && Array.isArray(proyecto.gestores)
+    ? proyecto.gestores.includes(usuario.uid)
+    : false;
+
+  if (!puedeVer) {
+    return (
+      <>
+        <Helmet>
+          <title>Acceso Denegado</title>
+        </Helmet>
+        <Header>
+          <HeaderActions>
+            <BtnRegresar />
+            <Link to="/inicio">
+              <LogoImg src={logo} alt="Logo" />
+            </Link>
+          </HeaderActions>
+          <Titulo>Acceso Denegado</Titulo>
+        </Header>
+        <MensajeError>
+          <strong>Ya no tienes acceso a este proyecto.</strong>
+          <br />
+          Por favor, contacta con el administrador si crees que es un error.
+          <br />
+          <Boton as={Link} to="/inicio" style={{ marginTop: 16 }}>
+            Ir a mis proyectos
+          </Boton>
+        </MensajeError>
+      </>
+    );
+  }
 
   return (
     <>

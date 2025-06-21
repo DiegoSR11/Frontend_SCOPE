@@ -329,7 +329,7 @@ const RegistroUsuarios = () => {
       let mensaje;
       switch (error.code) {
         case 'auth/invalid-password':
-          mensaje = 'La contraseña debe tener al menos 6 caracteres.';
+          mensaje = 'La contraseña debe tener al menos 8 caracteres.';
           break;
         case 'auth/email-already-in-use':
           mensaje = 'Ya existe una cuenta con ese correo.';
@@ -461,7 +461,7 @@ const RegistroUsuarios = () => {
                   <InputEstilizado
                     type="password"
                     name="password"
-                    placeholder="Mínimo 6 caracteres, 1 mayúscula, 1 número y 1 signo"
+                    placeholder="Mínimo 8 caracteres, 1 mayúscula, 1 número y 1 signo"
                     value={password}
                     onChange={handleChange}
                     required

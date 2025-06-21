@@ -96,6 +96,8 @@ const BotonCrear = styled.button`
   svg { height: ${props => props.$iconoGrande ? '1.5rem' : '0.75rem'}; fill: white; }
 `;
 
+// ... (importaciones y estilos iguales)
+
 const FormularioRiesgo = ({ riesgo, idProyecto }) => {
   const { id } = useParams();
   const { usuario } = useAuth();
@@ -106,8 +108,7 @@ const FormularioRiesgo = ({ riesgo, idProyecto }) => {
   const [nombreRiesgo, setNombreRiesgo] = useState(riesgo?.nombreRiesgo || '');
   const [descripcionRiesgo, setDescripcionRiesgo] = useState(riesgo?.descripcionRiesgo || '');
   const [fechaCreado, setfechaCreado] = useState(
-    riesgo?.fechaCreado ? new Date(riesgo.fechaCreado * 1000) : new Date()
-  );
+    riesgo?.fechaCreado ? new Date(riesgo.fechaCreado * 1000) : new Date());
   const [nivelImpacto, setNivelImpacto] = useState(riesgo?.impacto || '');
   const [probabilidad, setProbabilidad] = useState(riesgo?.probabilidad || '');
   const [estrategia, setEstrategia] = useState(riesgo?.estrategia || '');
@@ -159,7 +160,7 @@ const FormularioRiesgo = ({ riesgo, idProyecto }) => {
       impacto: nivelImpacto,
       probabilidad,
       estrategia,
-      fechaCreado: getUnixTime(fechaCreado),
+      fechaCreado: getUnixTime(fechaCreado), // Usa la fecha seleccionada por el usuario
     };
 
     try {
@@ -167,7 +168,7 @@ const FormularioRiesgo = ({ riesgo, idProyecto }) => {
         await editarRiesgo({ idRiesgo, ...data });
         setAlerta({ tipo: 'exito', mensaje: 'El riesgo fue editado correctamente' });
       } else {
-        await agregarRiesgo({ ...data, fechaCreado: getUnixTime(new Date()) });
+        await agregarRiesgo(data); // <--- solo usa data, no sobrescribas fechaCreado
         setAlerta({ tipo: 'exito', mensaje: 'El riesgo fue agregado correctamente' });
         setNombreRiesgo('');
         setDescripcionRiesgo('');
