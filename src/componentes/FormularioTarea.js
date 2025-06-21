@@ -188,7 +188,7 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
       return setEstadoAlerta(true);
     }
 
-    // Validación fecha fin no puede ser anterior a inicio
+    // Validación: fecha fin puede ser igual o mayor, pero nunca menor
     if (fechaVencimiento < fechaInicio) {
       setAlerta({ tipo: 'error', mensaje: 'La fecha de vencimiento no puede ser anterior a la fecha de inicio.' });
       return setEstadoAlerta(true);
@@ -230,7 +230,7 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
         await editarTarea({ idTarea, ...payload });
         setAlerta({ tipo: 'exito', mensaje: 'Tarea actualizada.' });
       } else {
-        await agregarTarea({ ...payload, fechaCreado: getUnixTime(new Date()) });
+        await agregarTarea(payload); // <-- Aquí se corrige, se usa la fecha elegida por el usuario
         setAlerta({ tipo: 'exito', mensaje: 'Tarea creada.' });
         // limpiar solo en creación
         setNombreTarea('');
