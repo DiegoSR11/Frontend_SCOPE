@@ -204,7 +204,7 @@ const ListaDeGrupos = () => {
         <Titulo>Grupos de Trabajo</Titulo>
         <BotonInfo mensaje="Aquí puedes visualizar, editar o eliminar los grupos a los que perteneces." />
         <BotonRegistrar to="/agregarGrupo">
-          Registrar Grupo
+          + Registrar Grupo
         </BotonRegistrar>
       </Header>
 

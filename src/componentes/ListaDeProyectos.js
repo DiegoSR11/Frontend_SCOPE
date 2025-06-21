@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Header, Titulo } from "./../elementos/Header";
 import { Helmet } from "react-helmet";
-import BtnRegresar from "./../elementos/BtnRegresar";
+import logo from './../imagenes/logo-celeste.png';
 import useObtenerProyectos from "./../hooks/useObtenerProyectos";
 import {
   Lista,
@@ -45,6 +45,113 @@ const BotonRegistrar = styled(Link)`
     transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 169, 255, 0.3);
   }
+`;
+
+const IconoAdvertencia = styled.span`
+  color: #f44336;
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 0.8rem;
+`;
+
+const BotonAccionEliminar = styled.button`
+  background: #f44336;
+  color: #fff;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  margin: 0 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.15s;
+  box-shadow: 0 2px 8px #f4433644;
+  &:hover, &:focus {
+    background: #d32f2f;
+    transform: scale(1.04);
+  }
+`;
+
+const BotonAccionCancelar = styled.button`
+  background: #f0f2f5;
+  color: #37474f;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  margin: 0 0.3rem;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px #b0bec544;
+  &:hover, &:focus {
+    background: #cfd8dc;
+  }
+`;
+
+const BotonesConfirmacion = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+`;
+
+const VentanaConfirmacion = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+`;
+
+const ContenedorConfirmacion = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+`;
+
+const LogoConTexto = styled(Link)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  margin-right: 1.0rem;
+`;
+
+const LogoInicio = styled.img`
+  width: 3rem;
+  height: auto;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  @media (max-width: 600px) {
+    width: 2.5rem;
+  }
+`;
+
+const TextoDebajoLogo = styled.span`
+  color: #222;
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-top: 0.08rem;
+  letter-spacing: 0.2px;
 `;
 
 const ListaDeProyectos = () => {
@@ -176,8 +283,11 @@ const ListaDeProyectos = () => {
       </Helmet>
 
       <Header>
-        <BtnRegresar />
-        <Titulo>Lista de Proyectos</Titulo>
+        <LogoConTexto to="/inicio">
+          <LogoInicio src={logo} alt="Inicio" />
+          <TextoDebajoLogo>Inicio</TextoDebajoLogo>
+        </LogoConTexto>
+        <Titulo style={{ marginLeft: "0.2rem" }}>Lista de Proyectos</Titulo>
         <BotonRegistrar to="/formulario">
           + Registrar Proyecto
         </BotonRegistrar>
@@ -251,49 +361,38 @@ const ListaDeProyectos = () => {
         </ContenedorBotonCentral>
       )}
 
-      {/* Modal de confirmación de eliminación */}
+            {/* Modal de confirmación de eliminación */}
       {modalEliminar.abierto && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            backgroundColor: "rgba(0,0,0,0.5)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 9999,
-          }}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "2rem",
-              borderRadius: "0.5rem",
-              maxWidth: "400px",
-              width: "90%",
-              textAlign: "center",
-            }}
-          >
-            <p>
-              ¿Seguro que deseas eliminar el proyecto{" "}
-              <strong>{modalEliminar.proyectoNombre}</strong>?
+        <VentanaConfirmacion role="dialog" aria-modal="true">
+          <ContenedorConfirmacion>
+            <IconoAdvertencia>
+              <svg width="36" height="36" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#f44336" opacity="0.12"/>
+                <path d="M12 7v5" stroke="#f44336" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="16" r="1.1" fill="#f44336"/>
+              </svg>
+            </IconoAdvertencia>
+            <p style={{ fontWeight: 600, fontSize: '1.15rem', color: '#333', marginBottom: '0.4rem' }}>
+              ¿Eliminar proyecto <span style={{ color: '#f44336' }}>{modalEliminar.proyectoNombre}</span>?
             </p>
-            <div style={{ marginTop: "1rem" }}>
-              <Boton onClick={confirmarEliminar} style={{ marginRight: "1rem" }}>
-                Sí, eliminar
-              </Boton>
-              <Boton onClick={cancelarEliminar} estilo="secundario">
-                Cancelar
-              </Boton>
+            <div style={{ color: "#777", fontSize: "0.97rem", marginBottom: "0.8rem" }}>
+              Esta acción es irreversible. ¿Deseas continuar?
             </div>
-          </div>
-        </div>
+            <BotonesConfirmacion>
+              <BotonAccionEliminar onClick={confirmarEliminar}>
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                  <path d="M6 7h12M10 11v4M14 11v4M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Eliminar
+              </BotonAccionEliminar>
+              <BotonAccionCancelar onClick={cancelarEliminar}>
+                Cancelar
+              </BotonAccionCancelar>
+            </BotonesConfirmacion>
+          </ContenedorConfirmacion>
+        </VentanaConfirmacion>
       )}
+
     </>
   );
 };

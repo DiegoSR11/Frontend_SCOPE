@@ -9,7 +9,6 @@ import BtnRegresar from "./../elementos/BtnRegresar";
 import Alerta from './../elementos/Alerta';
 import { Header, Titulo, ContenedorHeader } from './../elementos/Header';
 import DatePicker from './DatePicker';
-import { ReactComponent as IconoPlus } from './../imagenes/plus.svg';
 import useObtenerProyecto from '../hooks/useObtenerProyecto';
 import agregarRiesgo from './../firebase/agregarRiesgo'; 
 import editarRiesgo from './../firebase/editarRiesgo';
@@ -258,8 +257,7 @@ const FormularioRiesgo = ({ riesgo, idProyecto }) => {
               Cancelar
             </BotonCancelar>
             <BotonCrear type="submit">
-              {riesgo ? 'Editar Riesgo' : 'Agregar Riesgo'}
-              <IconoPlus style={{ marginLeft: '0.5rem' }} />
+              {riesgo ? 'Editar Riesgo' : '+ Agregar Riesgo'}
             </BotonCrear>
           </ContenedorBotones>
 

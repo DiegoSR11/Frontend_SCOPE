@@ -1,3 +1,4 @@
+// src/components/RegistroUsuarios.js
 import React, { useState, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import {
@@ -20,7 +21,38 @@ import agregarUsuario from './../firebase/agregarUsuario';
 import editarUsuario from './../firebase/editarUsuario';
 import useObtenerUsuario from './../hooks/useObtenerUsuario';
 
-// Botón ancho y destacado
+// --- NUEVO: Comentario tipo tarea ---
+const ComentarioObligatorio = styled.div`
+  background: #F7F8FC;
+  color: #1a237e;
+  border-left: 5px solid #1976d2;
+  border-radius: 0.4rem;
+  margin-bottom: 1.3rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1.01rem;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const ComentarioContrasena = styled.div`
+  background: #FFF6F6;
+  color: #b71c1c;
+  border-left: 4px solid #e53935;
+  border-radius: 0.4rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.1rem;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.99rem;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 const BotonPrimarioGrande = styled.button`
   background: #00A9FF;
   color: #fff;
@@ -72,7 +104,7 @@ const BotonCancelar = styled.button`
 // Solo letras y espacios
 const soloLetras = texto => /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]*$/.test(texto);
 
-// Valida contraseña segura: mínimo 6 caracteres, una mayúscula, un número y un signo
+// Valida contraseña segura: mínimo 8 caracteres, una mayúscula, un número y un signo
 const passwordFuerte = password =>
   /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[{};':"\\|,.<>/?`~]).{8,}$/.test(password);
 
@@ -109,6 +141,10 @@ const RegistroUsuarios = () => {
     }
   }, [usuarioEditar]);
 
+  const capitalizarPrimeraLetra = (texto) => {
+    if (!texto) return '';
+    return texto.charAt(0).toUpperCase() + texto.slice(1);
+  };
   const capitalizarCadaPalabra = (texto) => {
     const limpio = texto.replace(/^\s+/, '').replace(/\s{2,}/g, ' ');
     return limpio
@@ -119,10 +155,6 @@ const RegistroUsuarios = () => {
           : ''
       )
       .join(' ');
-  };
-  const capitalizar = (texto) => {
-    if (!texto) return '';
-    return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
   };
 
   const handleChange = (e) => {
@@ -144,19 +176,19 @@ const RegistroUsuarios = () => {
         if (soloLetras(value)) setApellido(capitalizarCadaPalabra(value));
         break;
       case 'empresa':
-        if (soloLetras(value)) setEmpresa(capitalizar(value));
+        if (soloLetras(value)) setEmpresa(capitalizarPrimeraLetra(value));
         break;
       case 'area':
-        if (soloLetras(value)) setArea(capitalizar(value));
+        if (soloLetras(value)) setArea(capitalizarPrimeraLetra(value));
         break;
       case 'rol':
-        if (soloLetras(value)) setRol(capitalizar(value));
+        if (soloLetras(value)) setRol(capitalizarPrimeraLetra(value));
         break;
       case 'pais':
-        if (soloLetras(value)) setPais(capitalizar(value));
+        if (soloLetras(value)) setPais(capitalizarPrimeraLetra(value));
         break;
       case 'departamento':
-        if (soloLetras(value)) setDepartamento(capitalizar(value));
+        if (soloLetras(value)) setDepartamento(capitalizarPrimeraLetra(value));
         break;
       case 'celular':
         if (/^\d*$/.test(value)) {
@@ -355,6 +387,12 @@ const RegistroUsuarios = () => {
         <Formulario onSubmit={handleSubmit}>
           <LogoImg src={logo} alt="Logo" />
           <TituloSeccion>{usuarioEditar ? "Editar Perfil" : "Registrarse"}</TituloSeccion>
+          
+          <ComentarioObligatorio>
+            <span role="img" aria-label="info">ℹ️</span>
+            Todos los campos son obligatorios.
+          </ComentarioObligatorio>
+
           <ContenedorInputsDosColumnas>
             <div>
               <label>Nombres</label>
@@ -477,6 +515,13 @@ const RegistroUsuarios = () => {
                     onChange={handleChange}
                     required
                   />
+                </div>
+                {/* Comentario contraseña */}
+                <div style={{ gridColumn: "1 / -1" }}>
+                  <ComentarioContrasena>
+                    <span role="img" aria-label="candado">🔒</span>
+                    La contraseña debe tener mínimo 8 caracteres, al menos una mayúscula, un número y un signo especial.
+                  </ComentarioContrasena>
                 </div>
               </>
             )}

@@ -21,7 +21,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import BotonInfo from "./../elementos/BotonInfo";
 
-// --- ESTILOS ---
 const TarjetaFormulario = styled.div`
   background: #fff;
   padding: 2rem;
@@ -34,12 +33,29 @@ const TarjetaFormulario = styled.div`
     margin: 1rem;
   }
 `;
+
+const ComentarioObligatorio = styled.div`
+  background: #F7F8FC;
+  color: #1a237e;
+  border-left: 5px solid #1976d2;
+  border-radius: 0.4rem;
+  margin-bottom: 1.3rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1.01rem;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 const LabelBotonContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 0.5rem;
 `;
+
 const SelectsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -49,6 +65,7 @@ const SelectsGrid = styled.div`
     grid-template-columns: 1fr;
   }
 `;
+
 const InputProyecto = styled.input`
   width: 100%;
   padding: 0.75rem;
@@ -60,17 +77,20 @@ const InputProyecto = styled.input`
   background: ${({ disabled }) => (disabled ? "#f2f2f2" : "#fff")};
   color: ${({ disabled }) => (disabled ? "#888" : "#222")};
 `;
+
 const CampoProyecto = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
 `;
+
 const Label = styled.label`
   font-size: 1rem;
   margin-bottom: 0.5rem;
   color: #333;
   font-weight: 500;
 `;
+
 const ContenedorBotonesAccion = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -81,6 +101,7 @@ const ContenedorBotonesAccion = styled.div`
     align-items: stretch;
   }
 `;
+
 const BotonCancelar = styled.button`
   background: #fff;
   border: 1px solid #ccc;
@@ -99,6 +120,7 @@ const BotonCancelar = styled.button`
     width: 100%;
   }
 `;
+
 const BotonCrear = styled.button`
   background: #00A9FF;
   color: #fff;
@@ -148,6 +170,7 @@ const ContenedorIA = styled.div`
     align-items: flex-start;
   }
 `;
+
 const ToggleSwitch = styled.label`
   position: relative;
   display: inline-block;
@@ -187,6 +210,7 @@ const ToggleSwitch = styled.label`
     transform: translateX(24px);
   }
 `;
+
 const SwitchIA = styled(ToggleSwitch)`
   transform: scale(1);
   input { transform: scale(1);}
@@ -199,6 +223,7 @@ const SwitchIA = styled(ToggleSwitch)`
     span:before { width: 20px; height: 20px; }
   }
 `;
+
 const TextoIA = styled.div`
   font-size: 0.95rem;
   color: #333;
@@ -218,6 +243,7 @@ const FormularioProyecto = ({ proyecto }) => {
 
   const [estadoAlerta, cambiarEstadoAlerta] = useState(false);
   const [alerta, cambiarAlerta] = useState({});
+  const [enviando, setEnviando] = useState(false);
   const navigate = useNavigate();
   const { usuario } = useAuth();
 
@@ -235,6 +261,8 @@ const FormularioProyecto = ({ proyecto }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (enviando) return; // Previene doble submit
+    setEnviando(true);
     cambiarEstadoAlerta(false);
     cambiarAlerta({});
 
@@ -252,6 +280,7 @@ const FormularioProyecto = ({ proyecto }) => {
         tipo: 'error',
         mensaje: 'Por favor completa todos los campos del formulario.',
       });
+      setEnviando(false);
       return;
     }
     try {
@@ -332,6 +361,7 @@ const FormularioProyecto = ({ proyecto }) => {
         mensaje: 'Hubo un problema al guardar el proyecto. Intenta nuevamente.'
       });
     }
+    setEnviando(false);
   };
 
   // 🚀 Función simulada IA
@@ -403,6 +433,11 @@ const FormularioProyecto = ({ proyecto }) => {
 
       <Formulario onSubmit={handleSubmit}>
         <TarjetaFormulario>
+          <ComentarioObligatorio>
+            {/* Puedes poner aquí un ícono de advertencia si tienes alguno */}
+            <span>Todos los campos son obligatorios.</span>
+          </ComentarioObligatorio>
+
           <CampoProyecto>
             <Label htmlFor="nombreProyecto">Nombre del Proyecto</Label>
             <InputProyecto
@@ -417,20 +452,14 @@ const FormularioProyecto = ({ proyecto }) => {
 
           {/* Muestra campos solo si es edición */}
           {proyecto && (
-            <>
-              <CampoProyecto>
-                <Label>UID del creador</Label>
-                <InputProyecto
-                  type="text"
-                  value={
-                    proyecto.uidUsuario ||
-                    usuario?.uid ||
-                    "No disponible"
-                  }
-                  disabled
-                />
-              </CampoProyecto>
-            </>
+            <CampoProyecto>
+              <Label>UID del creador</Label>
+              <InputProyecto
+                type="text"
+                value={proyecto.uidUsuario || usuario?.uid || "No disponible"}
+                disabled
+              />
+            </CampoProyecto>
           )}
 
           <CampoProyecto>
@@ -443,7 +472,7 @@ const FormularioProyecto = ({ proyecto }) => {
               id="descripcion"
               name="descripcion"
               rows="4"
-              placeholder="Describe brevemente el proyecto"
+              placeholder="Describe normas/compliance (ISO u otros), nivel de documentación inicial y de avance, disponibilidad de recursos y roles involucrados."
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               style={{ resize: "vertical", minHeight: "100px" }}
@@ -472,8 +501,9 @@ const FormularioProyecto = ({ proyecto }) => {
             <BotonCancelar type="button" onClick={() => window.history.back()}>
               Cancelar
             </BotonCancelar>
-            <BotonCrear type="submit">
-              {proyecto ? 'Actualizar Proyecto' : 'Crear Proyecto'}
+            <BotonCrear type="submit" disabled={enviando}>
+              {proyecto ? (enviando ? 'Actualizando...' : 'Actualizar Proyecto')
+                : (enviando ? 'Creando...' : 'Crear Proyecto')}
             </BotonCrear>
           </ContenedorBotonesAccion>
 

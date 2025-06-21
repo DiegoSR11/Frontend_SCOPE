@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import styled from "styled-components";
 
-import { Header, Titulo, LogoImg } from "./../elementos/Header";
+import { Header, Titulo } from "./../elementos/Header";
 import BtnRegresar from "./../elementos/BtnRegresar";
 import Cargando from "./../elementos/Cargando";
 import { ContenedorBoton } from "./../elementos/ElementosDeFormulario";
@@ -73,6 +73,36 @@ const HeaderActions = styled.div`
   gap: 0.5rem;
 `;
 
+const LogoConTexto = styled(Link)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  margin: 0 1.7rem 0 0; /* espacio a la derecha para separarlo del título */
+`;
+
+const LogoInicio = styled.img`
+  width: 3rem;
+  height: auto;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  @media (max-width: 600px) {
+    width: 2.5rem;
+  }
+`;
+
+const TextoDebajoLogo = styled.span`
+  color: #222; // Usa #00A9FF si quieres el texto azul
+  font-size: 0.75rem;
+  font-weight: 400;
+  margin-top: 0.07rem;
+  letter-spacing: 0.2px;
+`;
+
 const VerProyecto = () => {
   const { id } = useParams();
   const [proyecto] = useObtenerProyecto(id);
@@ -95,15 +125,16 @@ const VerProyecto = () => {
         <Helmet>
           <title>Acceso Denegado</title>
         </Helmet>
-        <Header>
-          <HeaderActions>
-            <BtnRegresar />
-            <Link to="/inicio">
-              <LogoImg src={logo} alt="Logo" />
-            </Link>
-          </HeaderActions>
-          <Titulo>Acceso Denegado</Titulo>
-        </Header>
+          <Header>
+            <HeaderActions>
+              <BtnRegresar />
+              <LogoConTexto to="/inicio">
+                <LogoInicio src={logo} alt="Inicio" />
+                <TextoDebajoLogo>Inicio</TextoDebajoLogo>
+              </LogoConTexto>
+            </HeaderActions>
+            <Titulo>Acceso Denegado</Titulo>
+          </Header>
         <MensajeError>
           <strong>Ya no tienes acceso a este proyecto.</strong>
           <br />
@@ -126,11 +157,11 @@ const VerProyecto = () => {
       <Header>
         <HeaderActions>
           <BtnRegresar />
-          <Link to="/inicio">
-            <LogoImg src={logo} alt="Logo" />
-          </Link>
+          <LogoConTexto to="/inicio">
+            <LogoInicio src={logo} alt="Inicio" />
+            <TextoDebajoLogo>Inicio</TextoDebajoLogo>
+          </LogoConTexto>
         </HeaderActions>
-
         <Titulo>{proyecto.nombreProyecto}</Titulo>
 
         {pestaña === "detalles" && (

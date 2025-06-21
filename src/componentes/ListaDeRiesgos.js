@@ -112,28 +112,6 @@ const ContenedorConfirmacion = styled.div`
   max-width: 400px;
 `;
 
-const BotonConfirmar = styled.button`
-  background-color: #d32f2f;
-  color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
-  margin: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-`;
-
-const BotonCancelar = styled.button`
-  background-color: #bdbdbd;
-  color: white;
-  border: none;
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
-  margin: 1rem;
-  cursor: pointer;
-  font-weight: bold;
-`;
-
 const VentanaDetalle = styled(VentanaConfirmacion)``;
 const ContenedorDetalle = styled(ContenedorConfirmacion)`
   text-align: left;
@@ -191,6 +169,61 @@ const impactos = [
   "Impacto Medio",
   "Impacto Bajo"
 ];
+
+const IconoAdvertencia = styled.span`
+  color: #f44336;
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 0.8rem;
+`;
+
+const BotonAccionEliminar = styled.button`
+  background: #f44336;
+  color: #fff;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  margin: 0 0.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.18s, box-shadow 0.18s, transform 0.15s;
+  box-shadow: 0 2px 8px #f4433644;
+  &:hover, &:focus {
+    background: #d32f2f;
+    transform: scale(1.04);
+  }
+`;
+
+const BotonAccionCancelar = styled.button`
+  background: #f0f2f5;
+  color: #37474f;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.7rem 2rem;
+  border-radius: 999px;
+  margin: 0 0.3rem;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px #b0bec544;
+  &:hover, &:focus {
+    background: #cfd8dc;
+  }
+`;
+
+const BotonesConfirmacion = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+`;
 
 const ListaDeRiesgos = ({ id }) => {
   const [riesgos, setRiesgos, obtenerMasRiesgos, hayMasPorCargar] = useObtenerRiesgos(id);
@@ -411,15 +444,37 @@ const ListaDeRiesgos = ({ id }) => {
         )}
       </Lista>
 
-      {mostrarConfirmacion && (
+            {mostrarConfirmacion && (
         <VentanaConfirmacion>
           <ContenedorConfirmacion>
-            <p>¿Estás seguro de que deseas eliminar el riesgo <strong>{riesgoAEliminar?.nombreRiesgo}</strong>?</p>
-            <BotonConfirmar onClick={eliminarRiesgo}>Eliminar</BotonConfirmar>
-            <BotonCancelar onClick={cancelarEliminacion}>Cancelar</BotonCancelar>
+            <IconoAdvertencia>
+              <svg width="36" height="36" fill="none" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="#f44336" opacity="0.12"/>
+                <path d="M12 7v5" stroke="#f44336" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="16" r="1.1" fill="#f44336"/>
+              </svg>
+            </IconoAdvertencia>
+            <p style={{ fontWeight: 600, fontSize: '1.15rem', color: '#333', marginBottom: '0.4rem' }}>
+              ¿Eliminar riesgo <span style={{ color: '#f44336' }}>{riesgoAEliminar?.nombreRiesgo}</span>?
+            </p>
+            <div style={{ color: "#777", fontSize: "0.97rem", marginBottom: "0.8rem" }}>
+              Esta acción es irreversible. ¿Deseas continuar?
+            </div>
+            <BotonesConfirmacion>
+              <BotonAccionEliminar onClick={eliminarRiesgo}>
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                  <path d="M6 7h12M10 11v4M14 11v4M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" stroke="#fff" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Eliminar
+              </BotonAccionEliminar>
+              <BotonAccionCancelar onClick={cancelarEliminacion}>
+                Cancelar
+              </BotonAccionCancelar>
+            </BotonesConfirmacion>
           </ContenedorConfirmacion>
         </VentanaConfirmacion>
       )}
+
 
       {riesgoSeleccionado && (
         <VentanaDetalle onClick={() => setRiesgoSeleccionado(null)}>

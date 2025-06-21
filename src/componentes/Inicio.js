@@ -17,12 +17,12 @@ import {
 import BotonCerrarSesion from './../elementos/BotonCerrarSesion';
 import { auth } from '../firebase/firebaseConfig';
 
-// Elevamos el ContenedorBotones e forzamos alineación centrada
+// Header styles
 const ContenedorBotones = styled(BaseContenedorBotones)`
   align-self: center !important;
 `;
 
-// envoltorio con etiqueta debajo del icono
+// Icon wrappers and labels
 const IconWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -35,7 +35,73 @@ const IconLabel = styled.span`
   color: #555;
 `;
 
-// resto de estilos omitidos para brevedad...
+// Logo SCOPE wrapper (logo grande)
+const LogoScopeWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-left: 1rem;
+`;
+
+// Animación para SCOPE igual que los iconos
+const ScopeTitle = styled.span`
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #00A9FF;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.12s;
+  &:hover {
+    transform: scale(1.1);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+  @media (max-width: 600px) {
+    font-size: 1.6rem;
+  }
+`;
+
+// Logo grande
+const LogoGrande = styled(LogoImg)`
+  width: 3.8rem;
+  max-height: 6rem;
+  @media (max-width: 600px) {
+    width: 3.5rem;
+    max-height: 3.8rem;
+  }
+`;
+
+// Animación iconos header, sin subrayado (underline)
+const StyledHeaderLink = styled(Link)`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none !important;
+  transition: transform 0.12s;
+  &:hover {
+    transform: scale(1.1);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+`;
+
+// Para el botón de cerrar sesión (sin ruta, pero igual animación)
+const StyledCerrarSesionButton = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.12s;
+  &:hover {
+    transform: scale(1.1);
+  }
+  &:active {
+    transform: scale(0.97);
+  }
+`;
+
 const Titulo = styled.h1`
   font-weight: bold;
   text-transform: uppercase;
@@ -60,7 +126,6 @@ const Contenedor = styled.div`
   align-items: center;
   padding: 2rem 1rem;
   background-color: #fff;
-
 `;
 const BotonesContainer = styled.div`
   display: flex;
@@ -123,36 +188,35 @@ const Inicio = () => {
       </Helmet>
 
       <Header>
-        {/* Logo con etiqueta "Inicio" */}
-        <IconWrapper>
-          <Link to="/">
-            <LogoImg src={logo} alt="Inicio" />
-          </Link>
-          <IconLabel>Inicio</IconLabel>
-        </IconWrapper>
+        {/* Logo grande + SCOPE animado */}
+        <LogoScopeWrapper>
+          <ScopeTitle>SCOPE</ScopeTitle>
+          <LogoGrande src={logo} alt="Logo SCOPE" />
+        </LogoScopeWrapper>
 
         {userId && (
           <>
             <IconWrapper>
-              <Link to="/grupos">
+              <StyledHeaderLink to="/grupos">
                 <LogoImg src={grupo} alt="Grupos" />
-              </Link>
-              <IconLabel>Grupos</IconLabel>
+                <IconLabel>Grupos</IconLabel>
+              </StyledHeaderLink>
             </IconWrapper>
             <IconWrapper>
-              <Link to={`/usuario/${userId}`}>
+              <StyledHeaderLink to={`/usuario/${userId}`}>
                 <LogoImg src={perfil} alt="Perfil" />
-              </Link>
-              <IconLabel>Perfil</IconLabel>
+                <IconLabel>Perfil</IconLabel>
+              </StyledHeaderLink>
             </IconWrapper>
           </>
         )}
 
         <ContenedorBotones>
-          {/* Botón de cerrar sesión con etiqueta */}
           <IconWrapper>
-            <BotonCerrarSesion />
-            <IconLabel>Cerrar sesión</IconLabel>
+            <StyledCerrarSesionButton>
+              <BotonCerrarSesion />
+              <IconLabel>Cerrar sesión</IconLabel>
+            </StyledCerrarSesionButton>
           </IconWrapper>
         </ContenedorBotones>
       </Header>

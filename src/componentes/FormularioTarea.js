@@ -28,6 +28,22 @@ const TarjetaFormulario = styled.div`
   margin: 2rem auto;
   max-width: 800px;
 `;
+
+const ComentarioObligatorio = styled.div`
+  background: #F7F8FC;
+  color: #1a237e;
+  border-left: 5px solid #1976d2;
+  border-radius: 0.4rem;
+  margin-bottom: 1.3rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 1.01rem;
+  font-weight: 500;
+  font-family: 'Work Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 const GridFormulario = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -40,12 +56,14 @@ const CampoFormulario = styled.div`
   display: flex;
   flex-direction: column;
 `;
+
 const Label = styled.label`
   font-size: 1rem;
   margin-bottom: 0.5rem;
   font-weight: 500;
   color: #333;
 `;
+
 const InputTarea = styled.input`
   width: 100%;
   padding: 0.75rem;
@@ -54,6 +72,21 @@ const InputTarea = styled.input`
   font-size: 1rem;
   font-family: 'Work Sans', sans-serif;
 `;
+
+// Nuevo: textarea extensible para descripción
+const TextareaDescripcion = styled.textarea`
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #ccc;
+  border-radius: 0.625rem;
+  font-size: 1rem;
+  font-family: 'Work Sans', sans-serif;
+  min-height: 100px;
+  resize: vertical;
+  margin-bottom: 1rem;
+  background: #fff;
+`;
+
 const ContenedorBotones = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -96,7 +129,6 @@ const Select = styled.select`
   font-family: 'Work Sans', sans-serif;
 `;
 
-// Métodos de validación por campo
 const validarNombreTarea = (valor) => valor && valor.trim() !== '';
 const validarDescripcionTarea = (valor) => valor && valor.trim() !== '';
 const validarResponsables = (valor) => Array.isArray(valor) && valor.length > 0;
@@ -123,6 +155,7 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
   const [antecesora, setAntecesora] = useState('');
   const [predecesora, setPredecesora] = useState('');
   const [gestores, setGestores] = useState([]);
+  const [enviando, setEnviando] = useState(false);
 
   // Alertas
   const [estadoAlerta, setEstadoAlerta] = useState(false);
@@ -130,7 +163,6 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
 
   const esEdicion = Boolean(idTarea);
 
-  // Carga datos si modo edición
   useEffect(() => {
     if (esEdicion && tareaProp) {
       setNombreTarea(tareaProp.nombreTarea || '');
@@ -145,14 +177,13 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
           ? new Date(tareaProp.fechaVencimiento * 1000)
           : new Date()
       );
-      setEstadoTarea(tareaProp.estadoTarea || 'pendiente');
+      setEstadoTarea(tareaProp.estadoTarea || 'Pendiente');
       setResponsables(tareaProp.responsables || []);
       setAntecesora(tareaProp.tareaAntecesora || '');
       setPredecesora(tareaProp.tareaPredecesora || '');
     }
   }, [esEdicion, tareaProp]);
 
-  // Traer gestores siempre (creación y edición)
   useEffect(() => {
     const fetchGestores = async () => {
       if (!proyecto?.gestores) return;
@@ -170,44 +201,53 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    if (enviando) return;
+    setEnviando(true);
 
-    // Validación por campo (individual)
     const faltantes = [];
     if (!validarNombreTarea(nombreTarea)) faltantes.push('nombre de la tarea');
     if (!validarDescripcionTarea(descripcionTarea)) faltantes.push('descripción');
     if (!validarResponsables(responsables)) faltantes.push('responsable(s)');
 
-    // Mensaje para 1 solo faltante
     if (faltantes.length === 1) {
       setAlerta({ tipo: 'error', mensaje: `Debe completar el campo: ${faltantes[0]}.` });
-      return setEstadoAlerta(true);
+      setEstadoAlerta(true);
+      setEnviando(false);
+      return;
     }
-    // Mensaje para varios faltantes
     if (faltantes.length > 1) {
       setAlerta({ tipo: 'error', mensaje: `Debe completar los siguientes campos: ${faltantes.join(', ')}.` });
-      return setEstadoAlerta(true);
+      setEstadoAlerta(true);
+      setEnviando(false);
+      return;
     }
 
-    // Validación: fecha fin puede ser igual o mayor, pero nunca menor
     if (fechaVencimiento < fechaInicio) {
       setAlerta({ tipo: 'error', mensaje: 'La fecha de vencimiento no puede ser anterior a la fecha de inicio.' });
-      return setEstadoAlerta(true);
+      setEstadoAlerta(true);
+      setEnviando(false);
+      return;
     }
 
-    // Validación de antecesora y predecesora
     const currentId = esEdicion ? idTarea : null;
     if (antecesora && predecesora && antecesora === predecesora) {
       setAlerta({ tipo: 'error', mensaje: 'La tarea antecesora y la predecesora no pueden ser la misma.' });
-      return setEstadoAlerta(true);
+      setEstadoAlerta(true);
+      setEnviando(false);
+      return;
     }
     if (currentId) {
       if (antecesora && antecesora === currentId) {
         setAlerta({ tipo: 'error', mensaje: 'La tarea no puede ser antecesora de sí misma.' });
-        return setEstadoAlerta(true);
+        setEstadoAlerta(true);
+        setEnviando(false);
+        return;
       }
       if (predecesora && predecesora === currentId) {
         setAlerta({ tipo: 'error', mensaje: 'La tarea no puede ser predecesora de sí misma.' });
-        return setEstadoAlerta(true);
+        setEstadoAlerta(true);
+        setEnviando(false);
+        return;
       }
     }
 
@@ -230,9 +270,8 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
         await editarTarea({ idTarea, ...payload });
         setAlerta({ tipo: 'exito', mensaje: 'Tarea actualizada.' });
       } else {
-        await agregarTarea(payload); // <-- Aquí se corrige, se usa la fecha elegida por el usuario
+        await agregarTarea(payload);
         setAlerta({ tipo: 'exito', mensaje: 'Tarea creada.' });
-        // limpiar solo en creación
         setNombreTarea('');
         setDescripcionTarea('');
         setFechaInicio(new Date());
@@ -249,6 +288,7 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
       setAlerta({ tipo: 'error', mensaje: 'Error al guardar.' });
       setEstadoAlerta(true);
     }
+    setEnviando(false);
   };
 
   return (
@@ -268,21 +308,25 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
 
       <Formulario onSubmit={handleSubmit}>
         <TarjetaFormulario>
+          <ComentarioObligatorio>
+            Campos obligatorios: Nombre, Descipción, Estado, Responsable y Fechas.
+          </ComentarioObligatorio>
+
           <CampoFormulario>
             <Label>Nombre de la tarea</Label>
             <InputTarea
               value={nombreTarea}
               onChange={e => setNombreTarea(e.target.value)}
-              placeholder="Nombre de la tarea"
+              placeholder="Ejemplo: Preparar informe de avance del proyecto"
             />
           </CampoFormulario>
 
           <CampoFormulario style={{ marginTop: '1rem' }}>
             <Label>Descripción</Label>
-            <InputTarea
+            <TextareaDescripcion
               value={descripcionTarea}
               onChange={e => setDescripcionTarea(e.target.value)}
-              placeholder="Descripción"
+              placeholder="Describe con detalle la actividad, entregable esperado y cualquier requerimiento especial"
             />
           </CampoFormulario>
 
@@ -291,17 +335,14 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
               <Label>Fecha de inicio</Label>
               <DatePicker fecha={fechaInicio} cambiarFecha={setFechaInicio} />
             </CampoFormulario>
-
             <CampoFormulario>
               <Label>Fecha de vencimiento</Label>
               <DatePicker fecha={fechaVencimiento} cambiarFecha={setFechaVencimiento} />
             </CampoFormulario>
-
             <CampoFormulario>
               <Label>Estado</Label>
               <SelectEstado estado={estadoTarea} cambiarEstado={setEstadoTarea} />
             </CampoFormulario>
-
             <CampoFormulario>
               <Label>Responsables</Label>
               <MultiSelectDropdown
@@ -311,7 +352,6 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
                 label="responsables"
               />
             </CampoFormulario>
-
             <CampoFormulario>
               <Label>Tarea antecesora</Label>
               <Select value={antecesora} onChange={e => setAntecesora(e.target.value)}>
@@ -321,7 +361,6 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
                 ))}
               </Select>
             </CampoFormulario>
-
             <CampoFormulario>
               <Label>Tarea predecesora</Label>
               <Select value={predecesora} onChange={e => setPredecesora(e.target.value)}>
@@ -337,9 +376,10 @@ const FormularioTarea = ({ tarea: tareaProp, idProyecto: idProyectoProp }) => {
             <BotonCancelar type="button" onClick={() => navigate(-1)}>
               Cancelar
             </BotonCancelar>
-            <BotonCrear type="submit">
-              <IconoPlus />
-              {esEdicion ? 'Actualizar' : 'Crear'}
+            <BotonCrear type="submit" disabled={enviando}>
+              {esEdicion
+                ? enviando ? 'Actualizando...' : 'Actualizar'
+                : enviando ? 'Creando...' : '+ Agregar Tarea'}
             </BotonCrear>
           </ContenedorBotones>
 
