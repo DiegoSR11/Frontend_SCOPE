@@ -1,7 +1,10 @@
+// src/componentes/SelectPropiedades.js
+
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import theme from "./../theme"; // Suponiendo que tienes un archivo de tema
 import BotonInfo from "./../elementos/BotonInfo";
+
 // Contenedor principal del select con espacio para la etiqueta
 const ContenedorSelect = styled.div`
   background: ${theme.grisClaro};
@@ -48,7 +51,6 @@ const Opciones = styled.div`
   overflow-y: auto;
   z-index: 1000;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.6);
-  
 `;
 
 // Estilo de cada opción
@@ -67,8 +69,7 @@ const Opcion = styled.div`
 
 // Contenedor para la etiqueta y el botón de selección
 const SelectPreguntaContainer = styled.div`
-  margin-bottom: 1.0rem; 
-  
+  margin-bottom: 1.0rem;
 `;
 
 // Etiqueta para cada pregunta
@@ -78,6 +79,7 @@ const LabelPregunta = styled.label`
   font-size: 1.0rem;
   color: ${theme.textoGris};
 `;
+
 const FilaSelect = styled.div`
   display: flex;
   align-items: center;
@@ -89,12 +91,6 @@ const SelectPregunta = ({ id, label, valor, cambiarValor, opciones, mensajeInfo 
   const [mostrarSelect, cambiarMostrarSelect] = useState(false);
   const refSelect = useRef(null);
 
-  // Manejo de la selección
-  const handleClick = (e) => {
-    cambiarValor(e.currentTarget.dataset.valor);
-    cambiarMostrarSelect(false); // Cierra el menú después de seleccionar
-  };
-
   // Cierra el menú si se hace clic fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -102,17 +98,9 @@ const SelectPregunta = ({ id, label, valor, cambiarValor, opciones, mensajeInfo 
         cambiarMostrarSelect(false);
       }
     };
-
-    if (mostrarSelect) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [mostrarSelect]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Filtramos las opciones para no mostrar "Selecciona una opción" si ya hay una opción seleccionada
   const opcionesFiltradas = valor
@@ -123,14 +111,22 @@ const SelectPregunta = ({ id, label, valor, cambiarValor, opciones, mensajeInfo 
     <SelectPreguntaContainer>
       <LabelPregunta htmlFor={id}>{label}</LabelPregunta>
       <FilaSelect>
-        <ContenedorSelect ref={refSelect} onClick={() => cambiarMostrarSelect(!mostrarSelect)}>
-          <OpcionSeleccionada>
-            {valor || "Selecciona una opción"}
-          </OpcionSeleccionada>
+        <ContenedorSelect
+          ref={refSelect}
+          onClick={() => cambiarMostrarSelect(!mostrarSelect)}
+        >
+          <OpcionSeleccionada>{valor || "Selecciona una opción"}</OpcionSeleccionada>
           {mostrarSelect && (
             <Opciones>
               {opcionesFiltradas.map((opcion) => (
-                <Opcion key={opcion.value} data-valor={opcion.value} onClick={handleClick}>
+                <Opcion
+                  key={opcion.value}
+                  data-valor={opcion.value}
+                  onClick={(e) => {
+                    cambiarValor(e.currentTarget.dataset.valor);
+                    cambiarMostrarSelect(false);
+                  }}
+                >
                   {opcion.texto}
                 </Opcion>
               ))}
@@ -145,7 +141,7 @@ const SelectPregunta = ({ id, label, valor, cambiarValor, opciones, mensajeInfo 
 
 // Usos específicos para cada pregunta
 
-const SelectTamanioProyecto = ({ valor, cambiarValor }) => (
+export const SelectTamanioProyecto = ({ valor, cambiarValor }) => (
   <SelectPregunta
     id="tamanioProyecto"
     label="¿Cuál es el tamaño de tu proyecto?"
@@ -153,112 +149,301 @@ const SelectTamanioProyecto = ({ valor, cambiarValor }) => (
     cambiarValor={cambiarValor}
     mensajeInfo="Define el tamaño del proyecto según su alcance, duración, cantidad de recursos y complejidad."
     opciones={[
-      { value: "Proyecto Pequeño", texto: "Pequeño: Alcance limitado, duración corta, pocos recursos involucrados." },
-      { value: "Proyecto Mediano", texto: "Mediano: Alcance moderado, duración media, equipo y recursos intermedios." },
-      { value: "Proyecto Grande", texto: "Grande: Alcance amplio, duración larga, varios equipos y recursos múltiples." },
+      { value: "proyecto_pequeno", texto: "Pequeño: alcance limitado, duración corta" },
+      { value: "proyecto_mediano", texto: "Mediano: alcance moderado, duración media" },
+      { value: "proyecto_grande", texto: "Grande: alcance amplio, duración larga" }
     ]}
   />
 );
 
-const SelectComplejoRiesgos = ({ valor, cambiarValor }) => (
+export const SelectNivelDocumentacion = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="nivelDocumentacion"
+    label="¿Nivel de documentación?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Selecciona si la documentación inicial será nula, básica o completa."
+    opciones={[
+      { value: "ninguna", texto: "Ninguna: no se requiere documentación formal" },
+      { value: "basica", texto: "Básica: documentación esencial" },
+      { value: "completa", texto: "Completa: documentación detallada" }
+    ]}
+  />
+);
+
+// Nuevo: Stakeholders involucrados (antes checkbox)
+export const SelectStakeholdersInvolucrados = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="stakeholders"
+    label="¿Stakeholders involucrados?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Indica si hay partes interesadas involucradas en el proyecto."
+    opciones={[
+      { value: "si", texto: "Sí: múltiples partes interesadas" },
+      { value: "no", texto: "No: sin partes interesadas definidas" }
+    ]}
+  />
+);
+
+// Nuevo: Duración en meses (antes input number)
+export const SelectDuracionMeses = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="duracionMeses"
+    label="Duración (meses)"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Selecciona el rango aproximado de duración en meses."
+    opciones={[
+      { value: "1-3", texto: "1–3 meses" },
+      { value: "4-6", texto: "4–6 meses" },
+      { value: "7-12", texto: "7–12 meses" },
+      { value: ">12", texto: "Más de 12 meses" }
+    ]}
+  />
+);
+
+export const SelectPresupuesto = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="presupuesto"
+    label="¿Presupuesto disponible?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Indica si el presupuesto es limitado, medio o alto."
+    opciones={[
+      { value: "limitado", texto: "Limitado: fondos ajustados" },
+      { value: "medio", texto: "Medio: presupuesto razonable" },
+      { value: "alto", texto: "Alto: recursos suficientes" }
+    ]}
+  />
+);
+
+export const SelectNivelRiesgo = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="nivelRiesgo"
+    label="¿Nivel de riesgo?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Evalúa el riesgo: bajo, medio o alto."
+    opciones={[
+      { value: "bajo", texto: "Bajo: riesgos mínimos" },
+      { value: "medio", texto: "Medio: riesgos moderados" },
+      { value: "alto", texto: "Alto: riesgos significativos" }
+    ]}
+  />
+);
+
+export const SelectRequisitosRegulatorios = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="requisitosRegulatorios"
+    label="¿Requisitos regulatorios?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Indica si existen requisitos legales o normativos."
+    opciones={[
+      { value: "si", texto: "Sí: requisitos documentados" },
+      { value: "no", texto: "No: sin requisitos especiales" }
+    ]}
+  />
+);
+
+export const SelectCulturaColaborativa = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="culturaColaborativa"
+    label="¿Cultura colaborativa?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Define si el equipo fomenta la colaboración continua."
+    opciones={[
+      { value: "si", texto: "Sí: trabajo en pareja y revisiones frecuentes" },
+      { value: "no", texto: "No: roles tradicionales" }
+    ]}
+  />
+);
+
+export const SelectFeedbackContinuo = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="feedbackContinuo"
+    label="¿Feedback continuo?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Indica si se brindan devoluciones regulares."
+    opciones={[
+      { value: "si", texto: "Sí: tras cada entrega" },
+      { value: "no", texto: "No: solo al final" }
+    ]}
+  />
+);
+
+export const SelectIntegracionContinua = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="integracionContinua"
+    label="¿Integración continua?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="¿Se integran cambios automáticamente?"
+    opciones={[
+      { value: "si", texto: "Sí: builds y tests automáticos" },
+      { value: "no", texto: "No: integraciones manuales" }
+    ]}
+  />
+);
+
+export const SelectEntregasFrecuentes = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="entregasFrecuentes"
+    label="¿Entregas frecuentes?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Define si hay lanzamientos regulares."
+    opciones={[
+      { value: "si", texto: "Sí: despliegues periódicos" },
+      { value: "no", texto: "No: despliegue único" }
+    ]}
+  />
+);
+
+export const SelectMantenimientoPrevisto = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="mantenimientoPrevisto"
+    label="¿Mantenimiento previsto?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="¿Se planifican actualizaciones posteriores?"
+    opciones={[
+      { value: "si", texto: "Sí: plan de soporte y parches" },
+      { value: "no", texto: "No: sin soporte formal" }
+    ]}
+  />
+);
+
+export const SelectAltaDisponibilidad = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="altaDisponibilidad"
+    label="¿Requiere alta disponibilidad?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Downtime mínimo y redundancia requerida."
+    opciones={[
+      { value: "si", texto: "Sí: servicio 24/7" },
+      { value: "no", texto: "No: caídas aceptables" }
+    ]}
+  />
+);
+
+export const SelectDespliegueSegmentado = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="despliegueSegmentado"
+    label="¿Despliegue segmentado?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Liberación por fases o regiones."
+    opciones={[
+      { value: "si", texto: "Sí: lanzamiento por fases" },
+      { value: "no", texto: "No: despliegue global" }
+    ]}
+  />
+);
+
+export const SelectPlanRollback = ({ valor, cambiarValor }) => (
+  <SelectPregunta
+    id="planRollback"
+    label="¿Necesita plan de rollback?"
+    valor={valor}
+    cambiarValor={cambiarValor}
+    mensajeInfo="Capacidad de revertir cambios si hay fallo."
+    opciones={[
+      { value: "si", texto: "Sí: procedimiento documentado" },
+      { value: "no", texto: "No: rollback opcional" }
+    ]}
+  />
+);
+
+export const SelectComplejoRiesgos = ({ valor, cambiarValor }) => (
   <SelectPregunta
     id="complejoRiesgos"
     label="¿Tu proyecto es complejo?"
     valor={valor}
     cambiarValor={cambiarValor}
-    mensajeInfo="Indica si el proyecto tiene alta complejidad técnica, de integración, gestión o incertidumbre en riesgos."
+    mensajeInfo="Indica la complejidad técnica y de integración."
     opciones={[
-      { value: "Proyecto Complejo", texto: "Sí: Requiere coordinación avanzada, integración compleja o manejo riguroso de riesgos." },
-      { value: "Proyecto No Complejo", texto: "No: Proceso sencillo con pocos riesgos y baja complejidad técnica." },
+      { value: "si", texto: "Sí: alta complejidad y riesgos" },
+      { value: "no", texto: "No: baja complejidad" }
     ]}
   />
 );
 
-const SelectPresenciaCliente = ({ valor, cambiarValor }) => (
+export const SelectPresenciaCliente = ({ valor, cambiarValor }) => (
   <SelectPregunta
     id="presenciaCliente"
-    label="¿El cliente estará presente durante el desarrollo?"
+    label="¿El cliente participará activamente?"
     valor={valor}
     cambiarValor={cambiarValor}
-    mensajeInfo="Indica si el cliente participará activamente en reuniones, revisiones, decisiones y validaciones del proyecto."
+    mensajeInfo="Indica nivel de involucramiento del cliente."
     opciones={[
-      { value: "Cliente Presente", texto: "Sí: Cliente participa activamente en reuniones y toma de decisiones." },
-      { value: "Cliente Ausente", texto: "No: Cliente con poca o ninguna participación durante el desarrollo." },
+      { value: "si", texto: "Sí: participa en reuniones" },
+      { value: "no", texto: "No: participación baja" }
     ]}
   />
 );
 
-const SelectIterativoProyecto = ({ valor, cambiarValor }) => (
+export const SelectIterativoProyecto = ({ valor, cambiarValor }) => (
   <SelectPregunta
     id="iterativoProyecto"
-    label="¿El proyecto se desarrollará de forma iterativa?"
+    label="¿El proyecto será iterativo?"
     valor={valor}
     cambiarValor={cambiarValor}
-    mensajeInfo="Define si el proyecto se ejecutará en ciclos iterativos que permiten revisiones y mejoras continuas."
+    mensajeInfo="Define si habrá ciclos iterativos."
     opciones={[
-      { value: "Proyecto Iterativo", texto: "Sí: Desarrollo en ciclos con entregas y mejoras progresivas." },
-      { value: "Proyecto No Iterativo", texto: "No: Desarrollo lineal sin revisiones intermedias planificadas." },
+      { value: "si", texto: "Sí: entregas frecuentes" },
+      { value: "no", texto: "No: secuencial" }
     ]}
   />
 );
 
-
-const SelectTipoProyecto = ({ valor, cambiarValor }) => (
+export const SelectTipoProyecto = ({ valor, cambiarValor }) => (
   <SelectPregunta
     id="tipoProyecto"
     label="¿Cuál es el tipo de tu proyecto?"
     valor={valor}
     cambiarValor={cambiarValor}
-    mensajeInfo="Selecciona la categoría que mejor representa tu proyecto en la consultora. Esto ayudará a personalizar recomendaciones y tareas."
+    mensajeInfo="Selecciona la categoría del proyecto."
     opciones={[
-      { value: "Infraestructura Tecnológica", texto: "Infraestructura Tecnológica" },
-      { value: "Plataformas y Servicios Cloud", texto: "Plataformas y Servicios Cloud" },
-      { value: "Aplicaciones Empresariales", texto: "Aplicaciones Empresariales" },
-      { value: "Seguridad TI", texto: "Seguridad TI" },
-      { value: "Cambio Tecnológico", texto: "Cambio Tecnológico" },
+      { value: "infraestructura", texto: "Infraestructura Tecnológica" },
+      { value: "cloud", texto: "Plataformas y Servicios Cloud" },
+      { value: "aplicaciones", texto: "Aplicaciones Empresariales" },
+      { value: "seguridad", texto: "Seguridad TI" },
+      { value: "cambio", texto: "Cambio Tecnológico" }
     ]}
   />
 );
 
-
-
-const SelectNivelImpacto = ({ valor, cambiarValor }) => (
+export const SelectNivelImpacto = ({ valor, cambiarValor }) => (
   <SelectPregunta
     id="nivelImpacto"
     label="Nivel de Impacto"
     valor={valor}
     cambiarValor={cambiarValor}
-    mensajeInfo="Evalúa el impacto potencial del riesgo en el proyecto en caso de que ocurra."
+    mensajeInfo="Evalúa el impacto potencial de los riesgos."
     opciones={[
-      { value: "Impacto Alto", texto: "Impacto Alto" },
-      { value: "Impacto Medio", texto: "Impacto Medio" },
-      { value: "Impacto Bajo", texto: "Impacto Bajo" },
+      { value: "alto", texto: "Alto: afecta plazos y objetivos" },
+      { value: "medio", texto: "Medio: requiere seguimiento" },
+      { value: "bajo", texto: "Bajo: fácil mitigación" }
     ]}
   />
 );
 
-const SelectProbabilidad = ({ valor, cambiarValor }) => (
+export const SelectProbabilidad = ({ valor, cambiarValor }) => (
   <SelectPregunta
     id="probabilidad"
     label="Probabilidad"
     valor={valor}
     cambiarValor={cambiarValor}
-    mensajeInfo="Estima qué tan probable es que ocurra el riesgo en el contexto del proyecto."
+    mensajeInfo="Estima la probabilidad del riesgo."
     opciones={[
-      { value: "Probabilidad Alta", texto: "Probabilidad Alta" },
-      { value: "Probabilidad Media", texto: "Probabilidad Media" },
-      { value: "Probabilidad Baja", texto: "Probabilidad Baja" },
+      { value: "alta", texto: "Alta: muy probable" },
+      { value: "media", texto: "Media: posible" },
+      { value: "baja", texto: "Baja: poco probable" }
     ]}
   />
 );
-
-
-export {
-  SelectTamanioProyecto,
-  SelectComplejoRiesgos,
-  SelectPresenciaCliente,
-  SelectIterativoProyecto,
-  SelectTipoProyecto,
-  SelectNivelImpacto,
-  SelectProbabilidad
-};

@@ -131,7 +131,7 @@ const BotonesContainer = styled.div`
   display: flex;
   gap: 15px;
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   justify-content: center;
   margin: 20px 0;  
   align-items: center;
@@ -230,6 +230,13 @@ const Inicio = () => {
             <LogoImgIcon src={proyecto_nuevo} alt="Nuevo proyecto" />
             <TextoBoton>Tengo un nuevo proyecto</TextoBoton>
           </BotonContenido>
+
+          {/* Nuevo botón para Proyecto Híbrido */}
+          <BotonContenido to="/formulario/hibrido">
+            <LogoImgIcon src={proyecto_nuevo} alt="Proyecto híbrido" />
+            <TextoBoton>Nuevo proyecto (Metodogía Hibrida)</TextoBoton>
+          </BotonContenido>
+
           <BotonContenido to="/lista">
             <LogoImgIcon src={historial_proyectos} alt="Historial de proyectos" />
             <TextoBoton>Lista de Proyectos</TextoBoton>

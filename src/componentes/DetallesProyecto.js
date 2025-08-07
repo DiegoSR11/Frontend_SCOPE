@@ -1,3 +1,5 @@
+// src/componentes/DetallesProyecto.js
+
 import React, { useState, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { format, fromUnixTime } from "date-fns";
@@ -8,6 +10,7 @@ import { doc, getDoc } from "firebase/firestore";
 import ListaUsuariosModal from "./ListaUsuariosModal";
 import Alerta from "./../elementos/Alerta";
 import { useAuth } from "../contextos/AuthContext";
+import useObtenerMetodologias from "../hooks/useObtenerMetodologias";
 
 // Estilos principales
 const ContenedorCentral = styled.div`
@@ -204,6 +207,7 @@ const formatearFecha = (fecha) =>
 
 const DetallesProyecto = ({ proyecto, idProyecto }) => {
   const { usuario } = useAuth();
+  const metodologias = useObtenerMetodologias(idProyecto);
 
   const [gestoresUids, setGestoresUids] = useState(proyecto.gestores || []);
   const [gestores, setGestores] = useState([]);
@@ -215,20 +219,15 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
   const [estadoAlertaUid, setEstadoAlertaUid] = useState(false);
   const [alertaUid, setAlertaUid] = useState({});
 
-  // Estado para modal de confirmación
   const [modalEliminar, setModalEliminar] = useState({
     abierto: false,
     uid: null,
     nombre: '',
-    esAutoEliminacion: false // true si es autoeliminación, false si lo elimina el creador
+    esAutoEliminacion: false
   });
 
-  // Sincronizar UIDs al cambiar proyecto
-  useEffect(() => {
-    if (proyecto?.gestores) setGestoresUids(proyecto.gestores);
-  }, [proyecto]);
+  useEffect(() => { if (proyecto?.gestores) setGestoresUids(proyecto.gestores); }, [proyecto]);
 
-  // Cargar detalles de gestores y creador
   useEffect(() => {
     const cargar = async () => {
       try {
@@ -261,12 +260,9 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
     } catch (error) {
       console.error('Error al actualizar gestores:', error);
       setGestoresUids(prev);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
-  // Validación de UID antes de agregar desde input
   const handleAgregarUsuario = async () => {
     if (!esCreador) return;
     const uid = usuarioNuevo.trim();
@@ -280,127 +276,96 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
       const snap = await getDoc(doc(db, 'usuarios', uid));
       if (!snap.exists()) {
         setEstadoAlertaUid(true);
-        setAlertaUid({
-          tipo: 'error',
-          mensaje: `El UID "${uid}" no existe.`
-        });
+        setAlertaUid({ tipo: 'error', mensaje: `El UID "${uid}" no existe.` });
       } else {
         await actualizarGestores([...gestoresUids, uid]);
         setEstadoAlertaUid(true);
-        setAlertaUid({
-          tipo: 'exito',
-          mensaje: 'Se agregó el usuario correctamente.'
-        });
+        setAlertaUid({ tipo: 'exito', mensaje: 'Usuario agregado correctamente.' });
         setUsuarioNuevo("");
       }
     } catch (error) {
       console.error('Error validando UID:', error);
       setEstadoAlertaUid(true);
-      setAlertaUid({
-        tipo: 'error',
-        mensaje: 'Hubo un error al validar el UID.'
-      });
-    } finally {
-      setLoading(false);
-    }
+      setAlertaUid({ tipo: 'error', mensaje: 'Error al validar el UID.' });
+    } finally { setLoading(false); }
   };
 
-  // Validación y alerta al agregar desde modal
   const handleAgregarDesdeModal = (seleccionados) => {
     if (!esCreador) return;
-    const uidsNuevos = seleccionados
-      .map((u) => u.uid)
-      .filter((uid) => !gestoresUids.includes(uid));
-
+    const uidsNuevos = seleccionados.map(u=>u.uid).filter(uid=>!gestoresUids.includes(uid));
     if (uidsNuevos.length) {
-      actualizarGestores([...gestoresUids, ...uidsNuevos]);
+      actualizarGestores([...gestoresUids,...uidsNuevos]);
       setEstadoAlertaUid(true);
-      setAlertaUid({
-        tipo: 'exito',
-        mensaje: `Se agregaron ${uidsNuevos.length} usuario(s) correctamente.`
-      });
+      setAlertaUid({ tipo: 'exito', mensaje: `${uidsNuevos.length} usuario(s) agregados.` });
     }
     setMostrarModalUsuarios(false);
   };
 
-  // Apertura de modal para eliminar
-  const abrirModalEliminar = (uid, nombre, esAutoEliminacion = false) => {
-    setModalEliminar({
-      abierto: true,
-      uid,
-      nombre,
-      esAutoEliminacion
-    });
+  const abrirModalEliminar = (uid, nombre, esAuto=false) => {
+    setModalEliminar({ abierto:true, uid, nombre, esAutoEliminacion:esAuto });
   };
-
-  // Confirmar eliminación (tanto creador a gestor, como autoeliminación)
   const confirmarEliminar = async () => {
     if (!modalEliminar.uid) return;
-    await actualizarGestores(gestoresUids.filter((x) => x !== modalEliminar.uid));
-    setModalEliminar({
-      abierto: false,
-      uid: null,
-      nombre: '',
-      esAutoEliminacion: false
-    });
-    // Si es autoeliminación, puedes redirigir o cerrar la vista si quieres
-    // window.location.href = "/inicio";
+    await actualizarGestores(gestoresUids.filter(x=>x!==modalEliminar.uid));
+    setModalEliminar({ abierto:false, uid:null, nombre:'', esAutoEliminacion:false });
   };
-
-  const cancelarEliminar = () => {
-    setModalEliminar({
-      abierto: false,
-      uid: null,
-      nombre: '',
-      esAutoEliminacion: false
-    });
-  };
+  const cancelarEliminar = () => setModalEliminar({ abierto:false, uid:null, nombre:'', esAutoEliminacion:false });
 
   return (
     <ContenedorCentral>
       <SeccionIzquierda>
-        <div style={{ marginBottom: '2rem' }}>
-          <h2 style={{ color: '#4f46e5' }}>{proyecto.nombreProyecto}</h2>
-          <p style={{ fontStyle: 'italic', color: '#777' }}>
-            {formatearFecha(proyecto.fechaCreado)}
-          </p>
+        <div style={{ marginBottom:'2rem' }}>
+          <h2 style={{ color:'#4f46e5' }}>{proyecto.nombreProyecto}</h2>
+          <p style={{ fontStyle:'italic', color:'#777' }}>{formatearFecha(proyecto.fechaCreado)}</p>
         </div>
 
-        <Tarjeta color="#e0e0e0" style={{ marginBottom: '2rem' }}>
+        <Tarjeta color="#e0e0e0" style={{ marginBottom:'1rem' }}>
           <Etiqueta>Descripción</Etiqueta>
           <Valor>{proyecto.descripcion}</Valor>
         </Tarjeta>
-
-        <DetallesGrid>
-          {[
-            { etiqueta: 'Tamaño', valor: proyecto.tamanioProyecto },
-            { etiqueta: 'Complejidad y Riesgos', valor: proyecto.complejoRiesgos },
-            { etiqueta: 'Presencia del Cliente', valor: proyecto.presenciaCliente },
-            { etiqueta: 'Iterativo', valor: proyecto.iterativoProyecto },
-            { etiqueta: 'Tipo', valor: proyecto.tipoProyecto },
-            { etiqueta: 'Metodología', valor: proyecto.metodologiaProyecto },
-          ].map((item, i) => (
-            <Tarjeta key={i} color={['#4f46e5','#059669','#2563eb','#d97706','#dc2626','#7c3aed'][i % 6]}>
-              <Etiqueta>{item.etiqueta}</Etiqueta>
-              <Valor>{item.valor}</Valor>
-            </Tarjeta>
-          ))}
-        </DetallesGrid>
-
         {creador && (
-          <Tarjeta color="#7c3aed" style={{ marginTop: '2rem' }}>
+          <Tarjeta color="#7c3aed" style={{ marginBottom:'1rem' }}>
             <Etiqueta>Creador del Proyecto</Etiqueta>
             <Valor>{creador.nombre} – {creador.correo}</Valor>
           </Tarjeta>
         )}
+
+        {proyecto.tipoProyecto==='hibrido' ? (
+          <>
+            <h3>Metodología Híbrida</h3>
+            {['analisis','planificacion','desarrollo','entrega'].map(fase=>(
+              <Tarjeta key={fase} color="#7c3aed" style={{ marginTop:'1rem' }}>
+                <Etiqueta style={{ textTransform:'capitalize' }}>{fase}</Etiqueta>
+                <Valor>{metodologias?.[fase]?.metodo}</Valor>
+              </Tarjeta>
+            ))}
+          </>
+        ) : (
+          <DetallesGrid>
+            {[
+              { etiqueta:'Tamaño', valor:proyecto.tamanioProyecto, color:'#4f46e5' },
+              { etiqueta:'Complejidad y Riesgos', valor:proyecto.complejoRiesgos, color:'#059669' },
+              { etiqueta:'Presencia del Cliente', valor:proyecto.presenciaCliente, color:'#2563eb' },
+              { etiqueta:'Iterativo', valor:proyecto.iterativoProyecto, color:'#d97706' },
+              { etiqueta:'Tipo', valor:proyecto.tipoProyecto, color:'#dc2626' },
+              { etiqueta:'Metodología', valor:proyecto.metodologiaProyecto, color:'#7c3aed' }
+            ].map((item,i)=>(
+              <Tarjeta key={i} color={item.color}>
+                <Etiqueta>{item.etiqueta}</Etiqueta>
+                <Valor>{item.valor}</Valor>
+              </Tarjeta>
+            ))}
+          </DetallesGrid>
+        )}
+
+
       </SeccionIzquierda>
 
       <SeccionDerecha>
         <h3>Gestores Asignados</h3>
-        {gestores.map((g) => {
-          const esCreadorGestor = creador?.uid === g.uid;
-          const esUsuarioActual = usuario?.uid === g.uid;
-
+        {gestores.map(g=>{
+          const esCreadorGestor = creador?.uid===g.uid;
+          const esUsuarioActual = usuario?.uid===g.uid;
           return (
             <TarjetaGestor key={g.uid}>
               <NombreGestor>
@@ -408,21 +373,13 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
               </NombreGestor>
               <InfoGestor><strong>Correo:</strong> {g.correo}</InfoGestor>
               <InfoGestor><strong>Área:</strong> {g.area}</InfoGestor>
-              {/* Solo el creador puede eliminar y nunca a sí mismo */}
               {!esCreadorGestor && esCreador && (
-                <BotonEliminar
-                  disabled={loading}
-                  onClick={() => abrirModalEliminar(g.uid, g.nombre, false)}
-                >
+                <BotonEliminar disabled={loading} onClick={()=>abrirModalEliminar(g.uid,g.nombre,false)}>
                   {loading ? <Spinner /> : 'Eliminar'}
                 </BotonEliminar>
               )}
-              {/* Si soy gestor (no creador) veo mi propio botón para autoeliminarme */}
               {!esCreadorGestor && esUsuarioActual && !esCreador && (
-                <BotonEliminar
-                  disabled={loading}
-                  onClick={() => abrirModalEliminar(g.uid, g.nombre, true)}
-                >
+                <BotonEliminar disabled={loading} onClick={()=>abrirModalEliminar(g.uid,g.nombre,true)}>
                   {loading ? <Spinner /> : 'Eliminarme'}
                 </BotonEliminar>
               )}
@@ -430,17 +387,16 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
           );
         })}
 
-        {/* Solo el creador puede agregar gestores */}
         {esCreador && (
           <>
-            <BotonAbrirListaUsuarios onClick={() => setMostrarModalUsuarios(true)} disabled={loading}>
-              Lista de Usuarios con Grupos común
+            <BotonAbrirListaUsuarios onClick={()=>setMostrarModalUsuarios(true)} disabled={loading}>
+              Lista de Usuarios con Grupos comunes
             </BotonAbrirListaUsuarios>
 
             <Input
               type="text"
               value={usuarioNuevo}
-              onChange={(e) => setUsuarioNuevo(e.target.value)}
+              onChange={e=>setUsuarioNuevo(e.target.value)}
               placeholder="UID del nuevo gestor"
               disabled={loading}
             />
@@ -450,41 +406,27 @@ const DetallesProyecto = ({ proyecto, idProyecto }) => {
           </>
         )}
 
-        <Alerta
-          tipo={alertaUid.tipo}
-          mensaje={alertaUid.mensaje}
-          estadoAlerta={estadoAlertaUid}
-          cambiarEstadoAlerta={setEstadoAlertaUid}
-        />
+        <Alerta tipo={alertaUid.tipo} mensaje={alertaUid.mensaje} estadoAlerta={estadoAlertaUid} cambiarEstadoAlerta={setEstadoAlertaUid} />
       </SeccionDerecha>
 
-      {/* Modal de confirmación para eliminar gestor (por creador o autoeliminación) */}
       {modalEliminar.abierto && (
-        <ModalConfirmacion role="dialog" aria-modal="true">
+        <ModalConfirmacion role="dialog">
           <ModalContenido>
             <p>
-              {modalEliminar.esAutoEliminacion
-                ? '¿Seguro que deseas salir del proyecto?'
-                : `¿Seguro que deseas eliminar a ${modalEliminar.nombre} del proyecto?`}
+              {modalEliminar.esAutoEliminacion ?
+                '¿Seguro que deseas salir del proyecto?' :
+                `¿Seguro que deseas eliminar a ${modalEliminar.nombre} del proyecto?`}
             </p>
-            <div style={{ marginTop: "1rem" }}>
-              <BotonModal onClick={confirmarEliminar}>
-                Sí, eliminar
-              </BotonModal>
-              <BotonModal $secundario onClick={cancelarEliminar}>
-                Cancelar
-              </BotonModal>
+            <div style={{ marginTop:'1rem' }}>
+              <BotonModal onClick={confirmarEliminar}>Sí, eliminar</BotonModal>
+              <BotonModal $secundario onClick={cancelarEliminar}>Cancelar</BotonModal>
             </div>
           </ModalContenido>
         </ModalConfirmacion>
       )}
 
-      {/* Solo el creador puede abrir el modal de agregar usuarios */}
       {mostrarModalUsuarios && esCreador && (
-        <ListaUsuariosModal
-          existingUids={gestoresUids}
-          closeModal={handleAgregarDesdeModal}
-        />
+        <ListaUsuariosModal existingUids={gestoresUids} closeModal={handleAgregarDesdeModal} />
       )}
     </ContenedorCentral>
   );

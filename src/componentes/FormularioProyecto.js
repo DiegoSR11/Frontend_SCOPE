@@ -364,11 +364,12 @@ const FormularioProyecto = ({ proyecto }) => {
     setEnviando(false);
   };
 
-  // 🚀 Función simulada IA
+  
   const obtenerMetodologiaIA = async (datos) => {
     try {
       const prompt = `
-        Eres un consultor senior en gestión de proyectos de TI con más de 15 años de experiencia aplicando metodologías de ciclo de vida y frameworks ágiles.
+        Eres un consultor senior en gestión de proyectos de TI con más de 15 años
+        de experiencia aplicando metodologías de ciclo de vida y frameworks ágiles.
 
         INSTRUCCIONES ESTRICTAS  
         1. Analiza únicamente la información contenida en el objeto JSON proyecto.  

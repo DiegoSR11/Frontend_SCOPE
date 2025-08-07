@@ -28,6 +28,8 @@ import RutaPrivada from './componentes/RutaPrivada';
 import PerfilUsuario from './componentes/PerfilUsuario';
 import ListaDeGrupos from './componentes/ListaDeGrupos';
 import EditarProyecto from './componentes/EditarProyecto';
+import MetodologiaSelector from './componentes/MetodologiaSelector';
+import CrearProyectoHibrido from './componentes/CrearProyectoHibrido';
 
 WebFont.load({
   google: {
@@ -52,7 +54,14 @@ const Index = () => {
                 <RegistroUsuarios />
               </RutaPrivada>
             }/>
-
+            <Route
+              path="/proyecto/:id/metodologia"
+              element={<RutaPrivada><MetodologiaSelector/></RutaPrivada>}
+            />
+            <Route
+              path="/formulario/hibrido"
+              element={<RutaPrivada><CrearProyectoHibrido/></RutaPrivada>}
+            />
             <Route path='/categorias' element={
               <RutaPrivada>
                 <GastosPorCategoria />
