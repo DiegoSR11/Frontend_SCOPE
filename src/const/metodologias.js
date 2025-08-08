@@ -1,59 +1,54 @@
-// src/const/metodologias.js
-
 /**
- * Árbol de decisión para recomendar una metodología específica en cada fase.
- * Cada fase incluye reglas basadas en criterios clave, seguidas de una regla
- * fallback genérica al final para garantizar siempre una recomendación.
+ * Árbol de decisión actualizado considerando metodologías específicas para cada fase:
+ * Waterfall, Iterativo, Spiral, V-Model, DSDM, RUP, Prototipado,
+ * Feature-Driven Development, Six Sigma, Scrum, Kanban, XP, Crystal, Lean.
  */
 export const arbolDecision = {
   // === Fase de Análisis ===
   analisis: [
     {
-      condiciones: { tamañoEquipo: 'pequeño', complejidad: 'baja', clienteInvolucrado: false },
-      metodo: 'Lean Startup',
-      descripcion: 'Validación rápida de hipótesis usando MVP y ciclos Build-Measure-Learn.',
+      condiciones: { clienteInvolucrado: true },
+      metodo: 'Prototipado',
+      descripcion: 'Construcción rápida de prototipos para validar requisitos y UX.',
       pasos: [
-        'Definir hipótesis de valor',
-        'Construir MVP (Producto Mínimo Viable)',
-        'Medir métricas clave',
-        'Aprender y pivotar'
+        'Recolectar requisitos básicos',
+        'Diseñar prototipo de baja fidelidad',
+        'Probar con usuarios',
+        'Iterar en base a feedback'
       ]
     },
     {
-      condiciones: { tamañoEquipo: 'mediano', complejidad: 'media', clienteInvolucrado: true },
-      metodo: 'Design Thinking',
-      descripcion: 'Enfoque centrado en el usuario para empatizar y prototipar soluciones.',
+      condiciones: { tamañoEquipo: 'pequeño', complejidad: 'baja' },
+      metodo: 'Lean Software Development',
+      descripcion: 'Minimizar desperdicios y maximizar valor desde el inicio.',
       pasos: [
-        'Empatizar con los usuarios',
-        'Definir necesidades clave',
-        'Idear múltiples soluciones',
-        'Prototipar la más prometedora',
-        'Testear con usuarios'
+        'Identificar flujo de valor',
+        'Eliminar actividades sin valor',
+        'Entregar rápido',
+        'Aprender y ajustar'
       ]
     },
     {
-      condiciones: { tamañoEquipo: 'grande', complejidad: 'alta' },
-      metodo: 'Scrum',
-      descripcion: 'Framework ágil con sprints iterativos y roles definidos.',
+      condiciones: { riesgos: 'alto' },
+      metodo: 'Spiral',
+      descripcion: 'Modelo evolutivo centrado en la identificación y mitigación de riesgos.',
       pasos: [
-        'Formar equipo (Product Owner, Scrum Master, Dev Team)',
-        'Crear Product Backlog con historias de usuario',
-        'Planificar Sprint inicial',
-        'Revisiones y refinamiento continuo'
+        'Definir objetivos de la fase',
+        'Analizar y priorizar riesgos',
+        'Desarrollar prototipos mitigantes',
+        'Evaluar resultados'
       ]
     },
     // fallback
     {
       condiciones: {},
-      metodo: 'Scrum',
-      descripcion: 'Framework ágil estándar, versátil y ampliamente adoptado.',
+      metodo: 'Waterfall',
+      descripcion: 'Modelo secuencial tradicional con fases claramente definidas.',
       pasos: [
-        'Establecer equipo Scrum',
-        'Priorizar Product Backlog',
-        'Sprint Planning',
-        'Daily Scrum',
-        'Sprint Review',
-        'Sprint Retrospective'
+        'Recopilar requisitos completos',
+        'Diseñar arquitectura y componentes',
+        'Implementar según plan',
+        'Realizar pruebas exhaustivas'
       ]
     }
   ],
@@ -61,48 +56,59 @@ export const arbolDecision = {
   // === Fase de Planificación ===
   planificacion: [
     {
-      condiciones: { duracionMeses: '<=3', riesgos: 'bajo' },
-      metodo: 'Prince2 Lite',
-      descripcion: 'Versión simplificada de PRINCE2, adecuada para proyectos cortos y de bajo riesgo.',
-      pasos: [
-        'Definir caso de negocio',
-        'Establecer tolerancias de tiempo y coste',
-        'Plan de calidad mínimo',
-        'Monitoreo de hitos clave'
-      ]
-    },
-    {
-      condiciones: { duracionMeses: '>3', riesgos: 'altos' },
+      condiciones: { requisitosEstables: true },
       metodo: 'Waterfall',
-      descripcion: 'Planificación detallada y secuencial para entornos con requisitos estables.',
+      descripcion: 'Planificación detallada y secuencial con entregables fijos.',
       pasos: [
-        'Recopilar y documentar requisitos completos',
-        'Diseñar arquitectura y componentes',
-        'Implementación en fases',
-        'Pruebas integrales antes de avanzar'
+        'Documentar requisitos',
+        'Definir cronograma y recursos',
+        'Asignar responsabilidades',
+        'Validar plan con stakeholders'
       ]
     },
     {
-      condiciones: { duracionMeses: '>6', clienteInvolucrado: true },
-      metodo: 'Rolling Wave Planning',
-      descripcion: 'Planificación progresiva: detallada para lo inmediato, de alto nivel para fases lejanas.',
+      condiciones: { iterativo: true },
+      metodo: 'Iterativo',
+      descripcion: 'Plan general combinado con ciclos repetitivos de refinamiento.',
       pasos: [
-        'Plan a nivel de hitos para el proyecto completo',
-        'Plan detallado para las próximas 2–3 iteraciones',
-        'Revisar y actualizar plan cada ciclo',
-        'Ajustes continuos según feedback'
+        'Establecer visión de alto nivel',
+        'Ejecutar ciclo iterativo',
+        'Revisar entregables',
+        'Ajustar plan para siguiente ciclo'
+      ]
+    },
+    {
+      condiciones: { qualityCritical: true },
+      metodo: 'V-Model',
+      descripcion: 'Cada fase de desarrollo corresponde a una fase de prueba equivalente.',
+      pasos: [
+        'Definir requisitos y criterios de aceptación',
+        'Diseño de alto nivel y pruebas de integración',
+        'Diseño detallado y pruebas unitarias',
+        'Validación final'
+      ]
+    },
+    {
+      condiciones: { timeFixed: true },
+      metodo: 'Dynamic Systems Development Method',
+      descripcion: 'Enfoque ágil con tiempos y costos fijos y fuerte participación del usuario.',
+      pasos: [
+        'Fijar presupuesto y plazos',
+        'Desarrollar en incrementos cortos',
+        'Revisión continua con usuario',
+        'Entrega incremental'
       ]
     },
     // fallback
     {
       condiciones: {},
-      metodo: 'Adaptive Project Framework (APF)',
-      descripcion: 'Replanificación periódica basada en resultados y feedback real.',
+      metodo: 'Rational Unified Process',
+      descripcion: 'Proceso iterativo con fases Inception, Elaboration, Construction y Transition.',
       pasos: [
-        'Definir alcance inicial flexible',
-        'Entregas adaptativas por iteración',
-        'Reevaluar y replanificar al cierre de cada iteración',
-        'Cerrar proyecto cuando se alcancen objetivos'
+        'Inception: visión y alcance',
+        'Elaboration: arquitectura estable',
+        'Construction: desarrollo iterativo',
+        'Transition: despliegue'
       ]
     }
   ],
@@ -110,48 +116,70 @@ export const arbolDecision = {
   // === Fase de Desarrollo ===
   desarrollo: [
     {
-      condiciones: { integracionContinua: true, despliegueAutomatizado: true },
-      metodo: 'DevOps',
-      descripcion: 'Automatización de CI/CD para entregas rápidas y fiables.',
+      condiciones: { culturaColaborativa: true, entregasFrecuentes: true },
+      metodo: 'Scrum',
+      descripcion: 'Framework ágil con sprints, roles claros y reuniones diarias.',
       pasos: [
-        'Configurar pipelines de integración continua (CI)',
-        'Automatizar pruebas unitarias y de integración',
-        'Despliegues automáticos a staging/prod',
-        'Monitorizar métricas de rendimiento'
+        'Planificar Sprint',
+        'Daily Scrum',
+        'Revisión de Sprint',
+        'Retrospectiva'
       ]
     },
     {
-      condiciones: { feedbackContinuo: true, culturaColaborativa: true },
-      metodo: 'Extreme Programming (XP)',
-      descripcion: 'Prácticas técnicas avanzadas para alta calidad de código.',
-      pasos: [
-        'Desarrollo basado en pruebas (TDD)',
-        'Programación en pareja',
-        'Integración continua diaria',
-        'Refactorización continua'
-      ]
-    },
-    {
-      condiciones: { entregasFrecuentes: true, mantenimientoPrevisto: true },
+      condiciones: { flujoContinuo: true },
       metodo: 'Kanban',
-      descripcion: 'Flujo continuo visualizando y limitando trabajo en progreso.',
+      descripcion: 'Visualiza el flujo de trabajo y limita el WIP para optimizar el proceso.',
       pasos: [
-        'Diseñar tablero Kanban con columnas clave',
-        'Establecer límites de WIP',
-        'Revisiones diarias del flujo',
-        'Optimizar cuellos de botella'
+        'Crear tablero Kanban',
+        'Establecer límites WIP',
+        'Monitorizar flujo',
+        'Mejorar cuellos de botella'
+      ]
+    },
+    {
+      condiciones: { calidadCodigoAlta: true },
+      metodo: 'Extreme Programming',
+      descripcion: 'Prácticas técnicas como TDD y pair programming para alta calidad.',
+      pasos: [
+        'Escribir tests antes de código (TDD)',
+        'Programación en pareja',
+        'Refactorización continua',
+        'Integración continua'
+      ]
+    },
+    {
+      condiciones: { proyectoGrande: true },
+      metodo: 'Feature-Driven Development',
+      descripcion: 'Desarrollo guiado por características basadas en un modelo de dominio.',
+      pasos: [
+        'Crear modelo de dominio',
+        'Planificar por feature',
+        'Desarrollar feature',
+        'Revisar y diseñar siguiente feature'
+      ]
+    },
+    {
+      condiciones: { tamañoEquipo: 'pequeño' },
+      metodo: 'Crystal',
+      descripcion: 'Familia de metodologías ligeras adaptadas al tamaño y criticidad.',
+      pasos: [
+        'Seleccionar variante Crystal adecuada',
+        'Definir protocolos de comunicación',
+        'Iteraciones cortas',
+        'Mejora continua'
       ]
     },
     // fallback
     {
       condiciones: {},
-      metodo: 'Kanban',
-      descripcion: 'Método flexible y simple para gestionar el flujo de trabajo.',
+      metodo: 'Lean Software Development',
+      descripcion: 'Principios lean para optimizar flujo y reducir desperdicios.',
       pasos: [
-        'Crear columnas To Do, Doing, Done',
-        'Priorizar tareas en backlog',
-        'Mover tarjetas según avance',
-        'Reuniones de mejora periódicas'
+        'Identificar flujo de valor',
+        'Eliminar desperdicios',
+        'Entregar rápido',
+        'Aprender y ajustar'
       ]
     }
   ],
@@ -159,48 +187,48 @@ export const arbolDecision = {
   // === Fase de Entrega ===
   entrega: [
     {
-      condiciones: { entregasIterativas: true },
-      metodo: 'Continuous Delivery',
-      descripcion: 'Entrega automatizada de cambios de software con calidad garantizada.',
+      condiciones: { pruebasExtensivas: true },
+      metodo: 'V-Model',
+      descripcion: 'Asocia cada fase de desarrollo con su fase de prueba equivalente.',
       pasos: [
-        'Automatizar compilación y pruebas',
-        'Deploy continuo a entorno de staging',
-        'Validación rápida por QA',
-        'Deploy on-demand a producción'
+        'Definir criterios de prueba',
+        'Diseño de pruebas de integración',
+        'Pruebas unitarias y de sistema',
+        'Validación final'
       ]
     },
     {
-      condiciones: { riesgoAlto: true },
-      metodo: 'Canary Release',
-      descripcion: 'Despliegue gradual a un subset de usuarios para mitigar riesgos.',
+      condiciones: { mejoraContinua: true },
+      metodo: 'Six Sigma',
+      descripcion: 'Metodología de mejora continua enfocada en la reducción de defectos.',
       pasos: [
-        'Seleccionar grupo pequeño de usuarios',
-        'Desplegar nueva versión al canario',
-        'Monitorizar métricas y logs',
-        'Escalar despliegue si es estable'
+        'Definir métricas clave',
+        'Medir rendimiento',
+        'Analizar causas raíz',
+        'Implementar mejoras'
       ]
     },
     {
-      condiciones: { entregasMasivas: true },
-      metodo: 'Phased Rollout',
-      descripcion: 'Liberación escalonada por regiones o segmentos de usuario.',
+      condiciones: { usuarioActivo: true },
+      metodo: 'Dynamic Systems Development Method',
+      descripcion: 'Despliegue iterativo con feedback frecuente de usuarios.',
       pasos: [
-        'Definir segmentos de usuarios/zonas',
-        'Desplegar en el primer segmento',
-        'Monitorear rendimiento y feedback',
-        'Avanzar a siguientes segmentos'
+        'Desplegar incremento funcional',
+        'Validar con usuario',
+        'Ajustar prioridades',
+        'Continuar iteraciones'
       ]
     },
     // fallback
     {
       condiciones: {},
-      metodo: 'Continuous Delivery',
-      descripcion: 'Enfoque por defecto para entregas rápidas y recurrentes.',
+      metodo: 'Rational Unified Process',
+      descripcion: 'Fase de Transition de RUP para despliegue y seguimiento.',
       pasos: [
-        'Pipeline CI/CD completo',
-        'Despliegue a staging y validación',
-        'Deploy a producción',
-        'Monitoreo post-release'
+        'Planificar transición',
+        'Realizar pruebas de aceptación',
+        'Desplegar en producción',
+        'Monitorear y soportar'
       ]
     }
   ]
