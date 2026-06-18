@@ -293,7 +293,7 @@ const ChatBotIA = ({ proyecto, tareas = [], riesgos = [], vista }) => {
 
     try {
       const { data } = await axios.post(
-        "https://backendscope-hkg5a4g8d7dsdwdh.canadacentral-01.azurewebsites.net/api/chat",
+        "https://scope-production-3ade.up.railway.app/",
         { mensaje: prompt }
       );
       let texto = limpiarMarkdown(data.respuesta?.content || "");
