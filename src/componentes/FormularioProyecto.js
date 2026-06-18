@@ -406,7 +406,7 @@ const FormularioProyecto = ({ proyecto }) => {
           }
         }
         `;
-      const respuesta = await axios.post("https://scope-production-3ade.up.railway.app/api/chat", {
+      const respuesta = await axios.post("https://scope-production-3ade.up.railway.app/", {
         mensaje: prompt,
       });
       const metodologiaPropuesta = respuesta.data.respuesta?.content || "No se pudo obtener una metodología.";
